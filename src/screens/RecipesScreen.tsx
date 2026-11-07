@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import { RECIPES } from '../data/recipes'
 import { recommend, searchRecipes, type Match } from '../lib/recommend'
 import { useKitchen } from '../store/KitchenContext'
+import type { RecipeType } from '../types'
 import { SearchIcon } from '../components/icons'
 
 /** 레시피 카드 한 장: 부족한 재료가 있으면 바로 장바구니에 담을 수 있다 */
@@ -31,7 +32,7 @@ function RecipeCard({ match }: { match: Match }) {
         <span style={{ flex: 1, minWidth: 0 }}>
           <h3>{recipe.name}</h3>
           <p className="recipe-meta">
-            {recipe.minutes}분 · {recipe.difficulty} · {recipe.servings}인분
+            {recipe.type} · {recipe.minutes}분 · {recipe.difficulty}
           </p>
           {ready ? (
             <p className="recipe-uses">{needed.join(' · ')}</p>
@@ -66,11 +67,15 @@ function RecipeCard({ match }: { match: Match }) {
   )
 }
 
+const TYPES: RecipeType[] = ['국·찌개', '밥·덮밥', '면', '볶음·구이', '반찬', '분식·간식', '양식']
+
 export function RecipesScreen() {
   const { state } = useKitchen()
   const [query, setQuery] = useState('')
+  const [type, setType] = useState<RecipeType | 'all'>('all')
   const q = query.trim()
-  const { canCook, oneMore } = recommend(RECIPES, state.fridge)
+  const pool = type === 'all' ? RECIPES : RECIPES.filter((r) => r.type === type)
+  const { canCook, oneMore } = recommend(pool, state.fridge)
   const results = searchRecipes(RECIPES, state.fridge, q)
   const emptyFridge = state.fridge.length === 0
 
@@ -131,8 +136,15 @@ export function RecipesScreen() {
         </div>
       ) : (
         <>
+          <div className="pills" role="group" aria-label="요리 종류">
+            {(['all', ...TYPES] as const).map((t) => (
+              <button key={t} type="button" className="pill" aria-pressed={type === t} onClick={() => setType(t)}>
+                {t === 'all' ? '전체' : t}
+              </button>
+            ))}
+          </div>
           <p className="subtitle" style={{ margin: 0 }}>
-            냉장고 재료로 찾았어요 · 소금, 식용유, 설탕 같은 기본 양념은 빼고 계산해요
+            레시피 {RECIPES.length}개 중에서 냉장고 재료로 찾았어요 · 소금, 식용유, 설탕 같은 기본 양념은 빼고 계산해요
           </p>
           <section style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div className="section-head">

@@ -67,7 +67,7 @@ export function RecipeDetailScreen() {
             {recipe.name}
           </h1>
           <p className="subtitle" style={{ fontSize: 14, marginTop: 6 }}>
-            {recipe.minutes}분 · {recipe.difficulty} · {recipe.servings}인분
+            {recipe.type} · {recipe.minutes}분 · {recipe.difficulty} · {recipe.servings}인분
           </p>
         </div>
 

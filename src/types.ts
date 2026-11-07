@@ -40,9 +40,12 @@ export interface CartItem {
   done: boolean
 }
 
+export type RecipeType = '국·찌개' | '밥·덮밥' | '면' | '볶음·구이' | '반찬' | '분식·간식' | '양식'
+
 export interface Recipe {
   id: string
   name: string
+  type: RecipeType
   minutes: number
   difficulty: '쉬움' | '보통'
   servings: number

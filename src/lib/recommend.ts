@@ -1,7 +1,7 @@
 import type { FridgeItem, Recipe } from '../types'
 
-/** 거의 모든 집에 있다고 보고 매칭에서 빼는 기본 양념 */
-export const STAPLES = new Set(['소금', '후추', '식용유', '설탕', '물'])
+/** 거의 모든 집에 있다고 보고 매칭에서 빼는 기본 양념 · 고명 */
+export const STAPLES = new Set(['소금', '후추', '식용유', '설탕', '물', '참깨', '통깨'])
 
 /** 사용자가 직접 입력한 이름을 표준 이름으로 바꾸는 별칭 표 */
 /**

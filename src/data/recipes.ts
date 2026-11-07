@@ -1,13 +1,15 @@
 import type { Recipe } from '../types'
+import { MORE_RECIPES } from './recipesMore'
 
 /**
  * MVP용 기본 레시피.
  * 재료 이름은 catalog.ts의 표준 이름과 똑같이 맞춰 둔다 (매칭의 핵심).
  * 나중에 공공 레시피 API 데이터를 받아 같은 형태로 정리해서 늘린다.
  */
-export const RECIPES: Recipe[] = [
+const BASE_RECIPES: Recipe[] = [
   {
     id: 'miyeokguk',
+    type: '국·찌개',
     name: '소고기 미역국',
     minutes: 30,
     difficulty: '쉬움',
@@ -28,6 +30,7 @@ export const RECIPES: Recipe[] = [
   },
   {
     id: 'kimchi-fried-rice',
+    type: '밥·덮밥',
     name: '김치볶음밥',
     minutes: 15,
     difficulty: '쉬움',
@@ -48,6 +51,7 @@ export const RECIPES: Recipe[] = [
   },
   {
     id: 'egg-roll',
+    type: '반찬',
     name: '계란말이',
     minutes: 10,
     difficulty: '쉬움',
@@ -67,6 +71,7 @@ export const RECIPES: Recipe[] = [
   },
   {
     id: 'tofu-braise',
+    type: '반찬',
     name: '두부 간장조림',
     minutes: 20,
     difficulty: '쉬움',
@@ -87,6 +92,7 @@ export const RECIPES: Recipe[] = [
   },
   {
     id: 'doenjang-jjigae',
+    type: '국·찌개',
     name: '된장찌개',
     minutes: 25,
     difficulty: '쉬움',
@@ -107,6 +113,7 @@ export const RECIPES: Recipe[] = [
   },
   {
     id: 'zucchini-jeon',
+    type: '반찬',
     name: '애호박전',
     minutes: 20,
     difficulty: '쉬움',
@@ -126,6 +133,7 @@ export const RECIPES: Recipe[] = [
   },
   {
     id: 'beef-radish-soup',
+    type: '국·찌개',
     name: '소고기 뭇국',
     minutes: 35,
     difficulty: '보통',
@@ -147,6 +155,7 @@ export const RECIPES: Recipe[] = [
   },
   {
     id: 'tuna-kimchi-jjigae',
+    type: '국·찌개',
     name: '참치김치찌개',
     minutes: 20,
     difficulty: '쉬움',
@@ -168,6 +177,7 @@ export const RECIPES: Recipe[] = [
   },
   {
     id: 'ramen-upgrade',
+    type: '면',
     name: '계란 파 라면',
     minutes: 10,
     difficulty: '쉬움',
@@ -185,6 +195,7 @@ export const RECIPES: Recipe[] = [
   },
   {
     id: 'soy-butter-rice',
+    type: '밥·덮밥',
     name: '간장버터 계란밥',
     minutes: 5,
     difficulty: '쉬움',
@@ -203,6 +214,7 @@ export const RECIPES: Recipe[] = [
   },
   {
     id: 'spicy-pork',
+    type: '볶음·구이',
     name: '제육볶음',
     minutes: 25,
     difficulty: '보통',
@@ -226,6 +238,7 @@ export const RECIPES: Recipe[] = [
   },
   {
     id: 'potato-stir-fry',
+    type: '반찬',
     name: '감자볶음',
     minutes: 15,
     difficulty: '쉬움',
@@ -244,6 +257,7 @@ export const RECIPES: Recipe[] = [
   },
   {
     id: 'bean-sprout-soup',
+    type: '국·찌개',
     name: '콩나물국',
     minutes: 15,
     difficulty: '쉬움',
@@ -262,6 +276,7 @@ export const RECIPES: Recipe[] = [
   },
   {
     id: 'cream-pasta',
+    type: '면',
     name: '베이컨 크림 파스타',
     minutes: 20,
     difficulty: '보통',
@@ -283,6 +298,7 @@ export const RECIPES: Recipe[] = [
   },
   {
     id: 'tteokbokki',
+    type: '분식·간식',
     name: '떡볶이',
     minutes: 20,
     difficulty: '쉬움',
@@ -305,6 +321,7 @@ export const RECIPES: Recipe[] = [
   },
   {
     id: 'spinach-namul',
+    type: '반찬',
     name: '시금치나물',
     minutes: 10,
     difficulty: '쉬움',
@@ -325,6 +342,7 @@ export const RECIPES: Recipe[] = [
   },
   {
     id: 'french-toast',
+    type: '분식·간식',
     name: '프렌치토스트',
     minutes: 10,
     difficulty: '쉬움',
@@ -343,6 +361,8 @@ export const RECIPES: Recipe[] = [
     ],
   },
 ]
+
+export const RECIPES: Recipe[] = [...BASE_RECIPES, ...MORE_RECIPES]
 
 export function findRecipe(id: string): Recipe | undefined {
   return RECIPES.find((r) => r.id === id)
