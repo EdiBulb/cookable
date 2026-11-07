@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { track } from '../lib/analytics'
 import { Link } from 'react-router-dom'
 import { RECIPES } from '../data/recipes'
 import { recommend, searchRecipes, type Match } from '../lib/recommend'
@@ -18,6 +19,7 @@ function RecipeCard({ match }: { match: Match }) {
     for (const name of toBuy) {
       dispatch({ type: 'addToCart', name, source: 'recipe', note: `${recipe.name}에 필요해요` })
     }
+    track('cart_add', { source: 'recipe', count: toBuy.length, recipe: recipe.name, where: 'list' })
   }
 
   return (
@@ -79,6 +81,20 @@ export function RecipesScreen() {
   const results = searchRecipes(RECIPES, state.fridge, q)
   const emptyFridge = state.fridge.length === 0
 
+  // 첫 화면에서 추천이 몇 개 나왔는지 (앱의 핵심 지표)
+  useEffect(() => {
+    track('recipe_home', { fridge_count: state.fridge.length, can_cook: canCook.length, one_more: oneMore.length })
+    // 화면에 들어올 때 한 번만
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  // 검색은 입력이 1초 멈추면 기록 (결과 0개인 검색어 = 다음에 넣을 레시피 후보)
+  useEffect(() => {
+    if (!q) return
+    const t = window.setTimeout(() => track('recipe_search', { query: q, results: results.length }), 1000)
+    return () => window.clearTimeout(t)
+  }, [q, results.length])
+
   return (
     <main className="screen">
       <header>
@@ -138,7 +154,16 @@ export function RecipesScreen() {
         <>
           <div className="pills" role="group" aria-label="요리 종류">
             {(['all', ...TYPES] as const).map((t) => (
-              <button key={t} type="button" className="pill" aria-pressed={type === t} onClick={() => setType(t)}>
+              <button
+                key={t}
+                type="button"
+                className="pill"
+                aria-pressed={type === t}
+                onClick={() => {
+                  setType(t)
+                  track('recipe_filter', { type: t })
+                }}
+              >
                 {t === 'all' ? '전체' : t}
               </button>
             ))}

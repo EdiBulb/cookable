@@ -1,4 +1,6 @@
+import { useEffect } from 'react'
 import { HashRouter, MemoryRouter, Route, Routes, useLocation } from 'react-router-dom'
+import { track } from './lib/analytics'
 import { KitchenProvider } from './store/KitchenContext'
 import { Splash } from './components/Splash'
 import { TabBar } from './components/TabBar'
@@ -13,6 +15,10 @@ const TAB_ROUTES = ['/', '/kitchen', '/cart']
 
 function Shell() {
   const { pathname } = useLocation()
+  useEffect(() => {
+    const screen = pathname.startsWith('/recipes/') ? 'recipe_detail' : pathname === '/' ? 'recipes' : pathname.slice(1)
+    track('screen_view', { screen })
+  }, [pathname])
   return (
     <div className="app">
       <Routes>

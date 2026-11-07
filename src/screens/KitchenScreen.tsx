@@ -3,6 +3,7 @@ import { Link } from 'react-router-dom'
 import type { Category, FridgeItem, Level, Place } from '../types'
 import { CATEGORIES, CATEGORY_LABEL, FRIDGE_PLACES, PLACE_LABEL } from '../data/catalog'
 import { useKitchen } from '../store/KitchenContext'
+import { track } from '../lib/analytics'
 import { BottomSheet } from '../components/BottomSheet'
 import { LEVEL_LABEL, LevelBars, LevelPicker, levelTextColor } from '../components/level'
 import { CartIcon, ChevronIcon, PlusIcon } from '../components/icons'
@@ -37,10 +38,14 @@ export function KitchenScreen() {
   const pantry = byPlace('pantry')
 
   const setLevel = (level: Level) => {
-    if (openItem) dispatch({ type: 'setLevel', name: openItem.name, level })
+    if (!openItem) return
+    track('level_changed', { from: openItem.level, to: level, where: 'kitchen' })
+    dispatch({ type: 'setLevel', name: openItem.name, level })
   }
   const update = (changes: { place?: Place; category?: Category }) => {
-    if (openItem) dispatch({ type: 'updateItem', name: openItem.name, changes })
+    if (!openItem) return
+    track('ingredient_edited', { field: changes.place ? 'place' : 'category' })
+    dispatch({ type: 'updateItem', name: openItem.name, changes })
   }
   const open = (name: string) => {
     setOpenName(name)
@@ -81,7 +86,7 @@ export function KitchenScreen() {
             <button type="button" aria-pressed={view === 'fridge'} onClick={() => setView('fridge')}>
               냉장고
             </button>
-            <button type="button" aria-pressed={view === 'list'} onClick={() => setView('list')}>
+            <button type="button" aria-pressed={view === 'list'} onClick={() => { setView('list'); track('kitchen_list_view') }}>
               전체 보기
             </button>
           </div>
@@ -238,6 +243,7 @@ export function KitchenScreen() {
             className="btn"
             style={{ background: 'transparent', color: 'var(--muted)', height: 44, fontSize: 14 }}
             onClick={() => {
+              track('ingredient_removed')
               dispatch({ type: 'removeItem', name: openItem.name })
               setOpenName(null)
             }}

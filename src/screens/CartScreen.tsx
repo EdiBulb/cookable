@@ -1,7 +1,9 @@
+import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
+import { track } from '../lib/analytics'
 import type { CartItem } from '../types'
 import { useKitchen } from '../store/KitchenContext'
-import { CheckIcon, CloseIcon } from '../components/icons'
+import { CheckIcon, CloseIcon, PlusIcon } from '../components/icons'
 
 const SECTION_TITLE: Record<CartItem['source'], string> = {
   auto: '다 떨어져서 자동으로 담겼어요',
@@ -12,12 +14,23 @@ const SECTION_TITLE: Record<CartItem['source'], string> = {
 export function CartScreen() {
   const { state, dispatch } = useKitchen()
   const navigate = useNavigate()
+  const [draft, setDraft] = useState('')
+
+  const addManual = (e: FormEvent) => {
+    e.preventDefault()
+    const name = draft.trim()
+    if (!name) return
+    dispatch({ type: 'addToCart', name, source: 'manual' })
+    track('cart_add', { source: 'manual' })
+    setDraft('')
+  }
 
   const inCart = new Set(state.cart.map((c) => c.name))
   const soon = state.fridge.filter((f) => f.level === 1 && !inCart.has(f.name))
   const bought = state.cart.filter((c) => c.done).length
 
   const finish = () => {
+    track('shopping_finished', { count: bought })
     dispatch({ type: 'finishShopping' })
     navigate('/kitchen')
   }
@@ -30,12 +43,35 @@ export function CartScreen() {
         <p className="subtitle">이번 장보기 목록 · 산 건 체크해 주세요</p>
       </header>
 
+      <form onSubmit={addManual} className="search" style={{ paddingRight: 6 }}>
+        <label htmlFor="cart-add" style={{ position: 'absolute', width: 1, height: 1, overflow: 'hidden', clip: 'rect(0 0 0 0)' }}>
+          장바구니에 직접 추가
+        </label>
+        <input
+          id="cart-add"
+          placeholder="직접 추가 (예: 휴지, 두유)"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          enterKeyHint="done"
+        />
+        <button
+          type="submit"
+          aria-label="추가"
+          disabled={!draft.trim()}
+          style={{ width: 40, height: 40, flex: 'none', border: 0, borderRadius: 10, background: draft.trim() ? 'var(--brand)' : 'var(--line)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+        >
+          <PlusIcon />
+        </button>
+      </form>
+
       {state.cart.length === 0 && (
         <div className="empty-state">
           <p>
             장바구니가 비어 있어요.
             <br />
             재료 남은 양을 0으로 바꾸면 여기에 자동으로 담겨요.
+            <br />
+            위 칸에 직접 적어서 추가할 수도 있어요.
           </p>
         </div>
       )}
@@ -94,7 +130,10 @@ export function CartScreen() {
                 type="button"
                 className="pill"
                 style={{ borderStyle: 'dashed', borderColor: '#9aa8a1', height: 44 }}
-                onClick={() => dispatch({ type: 'addToCart', name: f.name, source: 'manual', note: '곧 떨어지는 재료' })}
+                onClick={() => {
+                  dispatch({ type: 'addToCart', name: f.name, source: 'manual', note: '곧 떨어지는 재료' })
+                  track('cart_add', { source: 'soon' })
+                }}
               >
                 + {f.name}
               </button>

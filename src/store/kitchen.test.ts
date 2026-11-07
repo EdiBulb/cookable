@@ -35,3 +35,14 @@ describe('kitchenReducer', () => {
     expect(s.fridge.find((f) => f.name === '양파')?.level).toBe(5)
   })
 })
+
+describe('장바구니 직접 추가', () => {
+  it('재료 목록에 없는 생활용품은 장보기를 끝내도 냉장고에 들어가지 않는다', () => {
+    let s = kitchenReducer(EMPTY_KITCHEN, { type: 'addToCart', name: '휴지', source: 'manual' })
+    s = kitchenReducer(s, { type: 'addToCart', name: '두유', source: 'manual' })
+    for (const c of s.cart) s = kitchenReducer(s, { type: 'toggleCartDone', id: c.id })
+    s = kitchenReducer(s, { type: 'finishShopping' })
+    expect(s.cart).toHaveLength(0)
+    expect(s.fridge.map((f) => f.name)).toEqual(['두유'])
+  })
+})

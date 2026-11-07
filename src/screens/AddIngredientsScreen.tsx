@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom'
 import type { CatalogItem, Category, Place } from '../types'
 import { CATALOG, CATEGORIES, CATEGORY_LABEL, PLACE_LABEL, STARTER_PACK, findCatalog } from '../data/catalog'
 import { useKitchen } from '../store/KitchenContext'
+import { track } from '../lib/analytics'
 import { BackIcon, CheckIcon, PlusIcon, SearchIcon } from '../components/icons'
 
 const PLACES = Object.keys(PLACE_LABEL) as Place[]
@@ -58,7 +59,14 @@ export function AddIngredientsScreen() {
   const count = Object.keys(selected).length
   const submit = () => {
     if (count === 0) return
-    dispatch({ type: 'addItems', items: Object.values(selected) })
+    const items = Object.values(selected)
+    track('ingredients_added', {
+      count: items.length,
+      custom: items.filter((i) => !CATALOG.some((c) => c.name === i.name)).length,
+      starter_pack: STARTER_PACK.every((n) => !!selected[n]),
+      fridge_before: state.fridge.length,
+    })
+    dispatch({ type: 'addItems', items })
     // 재료를 넣으면 바로 만들 수 있는 요리를 보여준다
     navigate('/')
   }

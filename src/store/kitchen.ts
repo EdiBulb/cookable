@@ -73,13 +73,12 @@ export function kitchenReducer(state: KitchenState, action: KitchenAction): Kitc
       return { ...state, cart: state.cart.filter((c) => c.id !== action.id) }
 
     case 'finishShopping': {
-      // 산 재료(체크한 것)는 냉장고에 '넉넉'으로 채우고 장바구니에서 뺀다
+      // 산 재료(체크한 것)는 냉장고에 '넉넉'으로 채우고 장바구니에서 뺀다.
+      // 냉장고에도 재료 목록에도 없는 것(휴지 같은 생활용품)은 장바구니에서만 지운다.
       const bought = state.cart.filter((c) => c.done)
-      const items: CatalogItem[] = bought.map(
-        (c) =>
-          state.fridge.find((f) => f.name === c.name) ??
-          findCatalog(c.name) ?? { name: c.name, category: 'veg', place: 'main' },
-      )
+      const items: CatalogItem[] = bought
+        .map((c) => state.fridge.find((f) => f.name === c.name) ?? findCatalog(c.name))
+        .filter((x): x is CatalogItem => x !== undefined)
       const next = kitchenReducer(state, { type: 'addItems', items })
       return { ...next, cart: state.cart.filter((c) => !c.done) }
     }

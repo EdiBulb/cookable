@@ -1,4 +1,5 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { track } from '../lib/analytics'
 import { Link, useParams } from 'react-router-dom'
 import type { Level } from '../types'
 import { findRecipe } from '../data/recipes'
@@ -15,6 +16,10 @@ export function RecipeDetailScreen() {
   const [sheetOpen, setSheetOpen] = useState(false)
   const [draft, setDraft] = useState<Record<string, Level>>({})
   const [saved, setSaved] = useState(false)
+
+  useEffect(() => {
+    if (recipe) track('recipe_view', { recipe: recipe.name, type: recipe.type })
+  }, [recipe])
 
   if (!recipe) {
     return (
@@ -48,6 +53,11 @@ export function RecipeDetailScreen() {
       const next = draft[u.name]
       if (next !== undefined && next !== u.level) dispatch({ type: 'setLevel', name: u.name, level: next })
     }
+    track('cook_done', {
+      recipe: recipe.name,
+      changed: used.filter((u) => draft[u.name] !== undefined && draft[u.name] !== u.level).length,
+      ingredients: used.length,
+    })
     setSheetOpen(false)
     setSaved(true)
   }
@@ -105,7 +115,10 @@ export function RecipeDetailScreen() {
                     style={{ height: 36, padding: '0 10px', fontSize: 12 }}
                     disabled={inCart.has(ing.name)}
                     aria-pressed={inCart.has(ing.name)}
-                    onClick={() => dispatch({ type: 'addToCart', name: ing.name, source: 'recipe', note: `${recipe.name}에 필요해요` })}
+                    onClick={() => {
+                      dispatch({ type: 'addToCart', name: ing.name, source: 'recipe', note: `${recipe.name}에 필요해요` })
+                      track('cart_add', { source: 'recipe', count: 1, recipe: recipe.name, where: 'detail' })
+                    }}
                   >
                     {inCart.has(ing.name) ? '담았어요' : '담기'}
                   </button>
@@ -120,11 +133,12 @@ export function RecipeDetailScreen() {
               type="button"
               className="btn btn--outline"
               style={{ width: '100%', height: 44 }}
-              onClick={() =>
+              onClick={() => {
                 toBuy.forEach((name) =>
                   dispatch({ type: 'addToCart', name, source: 'recipe', note: `${recipe.name}에 필요해요` }),
                 )
-              }
+                track('cart_add', { source: 'recipe', count: toBuy.length, recipe: recipe.name, where: 'detail' })
+              }}
             >
               부족한 {toBuy.length}개 모두 장바구니에 담기
             </button>
@@ -143,7 +157,7 @@ export function RecipeDetailScreen() {
           ))}
         </section>
 
-        <a href={ytUrl} target="_blank" rel="noreferrer" className="yt-link">
+        <a href={ytUrl} target="_blank" rel="noreferrer" className="yt-link" onClick={() => track('youtube_click', { recipe: recipe.name })}>
           <span
             style={{ width: 40, height: 40, borderRadius: 20, background: 'var(--ink)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
           >
