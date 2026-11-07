@@ -59,13 +59,14 @@ export function AddIngredientsScreen() {
   const submit = () => {
     if (count === 0) return
     dispatch({ type: 'addItems', items: Object.values(selected) })
+    // 재료를 넣으면 바로 만들 수 있는 요리를 보여준다
     navigate('/')
   }
 
   return (
     <main className="screen screen--plain">
       <header className="header-row">
-        <Link to="/" className="icon-btn icon-btn--ghost" aria-label="내 주방으로 돌아가기">
+        <Link to="/kitchen" className="icon-btn icon-btn--ghost" aria-label="내 주방으로 돌아가기">
           <BackIcon />
         </Link>
         <div>

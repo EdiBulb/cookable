@@ -8,20 +8,20 @@ import { RecipesScreen } from './screens/RecipesScreen'
 import { RecipeDetailScreen } from './screens/RecipeDetailScreen'
 import { CartScreen } from './screens/CartScreen'
 
-/** 탭바는 메인 탭 화면에서만 보여준다 */
-const TAB_ROUTES = ['/', '/recipes', '/cart']
+/** 탭바는 메인 탭 화면에서만 보여준다. 첫 화면은 레시피(앱을 여는 이유) */
+const TAB_ROUTES = ['/', '/kitchen', '/cart']
 
 function Shell() {
   const { pathname } = useLocation()
   return (
     <div className="app">
       <Routes>
-        <Route path="/" element={<KitchenScreen />} />
+        <Route path="/" element={<RecipesScreen />} />
+        <Route path="/kitchen" element={<KitchenScreen />} />
         <Route path="/add" element={<AddIngredientsScreen />} />
-        <Route path="/recipes" element={<RecipesScreen />} />
         <Route path="/recipes/:id" element={<RecipeDetailScreen />} />
         <Route path="/cart" element={<CartScreen />} />
-        <Route path="*" element={<KitchenScreen />} />
+        <Route path="*" element={<RecipesScreen />} />
       </Routes>
       {TAB_ROUTES.includes(pathname) && <TabBar />}
     </div>

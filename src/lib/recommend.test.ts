@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import type { FridgeItem, Level } from '../types'
 import { RECIPES } from '../data/recipes'
-import { normalize, recommend } from './recommend'
+import { normalize, recommend, searchRecipes } from './recommend'
 
 const item = (name: string, level: Level = 3): FridgeItem => ({
   id: name,
@@ -63,5 +63,24 @@ describe('recommend', () => {
     const { canCook, oneMore } = recommend(RECIPES, empty)
     expect(canCook.map((m) => m.recipe.name)).not.toContain('소고기 미역국')
     expect(oneMore.find((m) => m.recipe.name === '소고기 미역국')?.missing).toEqual(['건미역'])
+  })
+})
+
+describe('searchRecipes', () => {
+  const fridge = [item('김치'), item('계란'), item('대파')]
+
+  it('요리 이름으로 찾고, 부족한 재료를 알려준다', () => {
+    const [first] = searchRecipes(RECIPES, fridge, '김치볶음밥')
+    expect(first.recipe.name).toBe('김치볶음밥')
+    expect(first.missing).toEqual(['쌀'])
+  })
+
+  it('재료 이름으로도 찾는다 (별칭 포함)', () => {
+    const names = searchRecipes(RECIPES, fridge, '다진 마늘').map((m) => m.recipe.name)
+    expect(names).toContain('소고기 미역국')
+  })
+
+  it('빈 검색어는 결과가 없다', () => {
+    expect(searchRecipes(RECIPES, fridge, '  ')).toEqual([])
   })
 })

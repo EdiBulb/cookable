@@ -20,7 +20,7 @@ export function RecipeDetailScreen() {
     return (
       <main className="screen">
         <p>레시피를 찾을 수 없어요.</p>
-        <Link to="/recipes">레시피 목록으로</Link>
+        <Link to="/">레시피 목록으로</Link>
       </main>
     )
   }
@@ -34,6 +34,8 @@ export function RecipeDetailScreen() {
   // 요리 후 체크 대상: 이 레시피에 쓰였고 냉장고에 있는 재료
   const used = ingredients.filter((i) => i.item).map((i) => i.item!)
   const inCart = new Set(state.cart.filter((c) => !c.done).map((c) => c.name))
+  const toBuy = ingredients.filter((i) => !i.has && !i.staple && !inCart.has(i.name)).map((i) => i.name)
+  const missingCount = ingredients.filter((i) => !i.has && !i.staple).length
   const ytUrl = `https://www.youtube.com/results?search_query=${encodeURIComponent(`${recipe.name} 레시피`)}`
 
   const openSheet = () => {
@@ -53,7 +55,7 @@ export function RecipeDetailScreen() {
   return (
     <main style={{ paddingBottom: 120, background: 'var(--surface)', minHeight: '100dvh' }}>
       <div className="detail-hero">
-        <Link to="/recipes" className="icon-btn" aria-label="레시피 목록으로 돌아가기">
+        <Link to="/" className="icon-btn" aria-label="레시피 목록으로 돌아가기">
           <BackIcon />
         </Link>
         <span aria-hidden="true">{recipe.name[0]}</span>
@@ -70,9 +72,14 @@ export function RecipeDetailScreen() {
         </div>
 
         <section style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <h2 className="section-title" style={{ fontSize: 17 }}>
-            재료
-          </h2>
+          <div className="section-head">
+            <h2 className="section-title" style={{ fontSize: 17 }}>
+              재료
+            </h2>
+            <span className="count" style={{ color: missingCount ? '#b4531a' : 'var(--good)', fontWeight: 700 }}>
+              {missingCount ? `${missingCount}개 부족해요` : '모두 있어요'}
+            </span>
+          </div>
           <div className="card">
             {ingredients.map((ing) => (
               <div key={ing.name} className="ing-row">
@@ -108,6 +115,20 @@ export function RecipeDetailScreen() {
               </div>
             ))}
           </div>
+          {toBuy.length > 1 && (
+            <button
+              type="button"
+              className="btn btn--outline"
+              style={{ width: '100%', height: 44 }}
+              onClick={() =>
+                toBuy.forEach((name) =>
+                  dispatch({ type: 'addToCart', name, source: 'recipe', note: `${recipe.name}에 필요해요` }),
+                )
+              }
+            >
+              부족한 {toBuy.length}개 모두 장바구니에 담기
+            </button>
+          )}
         </section>
 
         <section style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>

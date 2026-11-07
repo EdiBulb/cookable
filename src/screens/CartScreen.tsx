@@ -19,7 +19,7 @@ export function CartScreen() {
 
   const finish = () => {
     dispatch({ type: 'finishShopping' })
-    navigate('/')
+    navigate('/kitchen')
   }
 
   return (

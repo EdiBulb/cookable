@@ -55,6 +55,25 @@ export function matchRecipe(recipe: Recipe, owned: Set<string>): Match {
   return { recipe, needed, missing }
 }
 
+/**
+ * 요리 이름이나 재료 이름으로 레시피 검색.
+ * 결과마다 내 냉장고 기준으로 부족한 재료를 같이 돌려준다 (부족한 게 적은 순).
+ */
+export function searchRecipes(recipes: Recipe[], fridge: FridgeItem[], query: string): Match[] {
+  const q = query.trim()
+  if (!q) return []
+  const nq = normalize(q)
+  const owned = ownedSet(fridge)
+  return recipes
+    .filter(
+      (r) =>
+        r.name.includes(q) ||
+        r.ingredients.some((i) => i.name.includes(q) || normalize(i.name) === nq),
+    )
+    .map((r) => matchRecipe(r, owned))
+    .sort((a, b) => a.missing.length - b.missing.length)
+}
+
 export interface Recommendation {
   canCook: Match[]
   oneMore: Match[]
