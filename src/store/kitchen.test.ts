@@ -18,6 +18,15 @@ describe('kitchenReducer', () => {
     expect(s.cart[0]).toMatchObject({ name: '양파', source: 'auto', done: false })
   })
 
+  it('잘못 넣은 재료의 칸과 카테고리를 바꿀 수 있다 (남은 양은 그대로)', () => {
+    const s = kitchenReducer(withOnion, {
+      type: 'updateItem',
+      name: '양파',
+      changes: { place: 'pantry', category: 'grain' },
+    })
+    expect(s.fridge[0]).toMatchObject({ name: '양파', place: 'pantry', category: 'grain', level: 5 })
+  })
+
   it('장보기를 끝내면 산 재료가 냉장고에 다시 채워진다', () => {
     let s = kitchenReducer(withOnion, { type: 'setLevel', name: '양파', level: 0 })
     s = kitchenReducer(s, { type: 'toggleCartDone', id: s.cart[0].id })

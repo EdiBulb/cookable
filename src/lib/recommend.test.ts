@@ -18,6 +18,12 @@ describe('normalize', () => {
     expect(normalize(' 다진 마늘 ')).toBe('마늘')
     expect(normalize('양파')).toBe('양파')
   })
+
+  it('목록에 따로 있는 가공 재료도 레시피에서는 같은 재료로 본다', () => {
+    expect(normalize('다진 마늘')).toBe('마늘')
+    expect(normalize('삼겹살')).toBe('돼지고기')
+    expect(normalize('진간장')).toBe('간장')
+  })
 })
 
 describe('recommend', () => {

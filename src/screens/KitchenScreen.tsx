@@ -1,11 +1,13 @@
 import { useState } from 'react'
 import { Link } from 'react-router-dom'
-import type { FridgeItem, Level } from '../types'
+import type { Category, FridgeItem, Level, Place } from '../types'
 import { CATEGORIES, CATEGORY_LABEL, FRIDGE_PLACES, PLACE_LABEL } from '../data/catalog'
 import { useKitchen } from '../store/KitchenContext'
 import { BottomSheet } from '../components/BottomSheet'
 import { LEVEL_LABEL, LevelBars, LevelPicker, levelTextColor } from '../components/level'
 import { CartIcon, ChevronIcon, PlusIcon } from '../components/icons'
+
+const PLACES: Place[] = [...FRIDGE_PLACES, 'pantry']
 
 function ItemChip({ item, onOpen }: { item: FridgeItem; onOpen: () => void }) {
   return (
@@ -26,6 +28,7 @@ export function KitchenScreen() {
   const { state, dispatch } = useKitchen()
   const [view, setView] = useState<'fridge' | 'list'>('fridge')
   const [openName, setOpenName] = useState<string | null>(null)
+  const [editing, setEditing] = useState(false)
 
   const fridge = state.fridge
   const openItem = fridge.find((f) => f.name === openName) ?? null
@@ -35,6 +38,13 @@ export function KitchenScreen() {
 
   const setLevel = (level: Level) => {
     if (openItem) dispatch({ type: 'setLevel', name: openItem.name, level })
+  }
+  const update = (changes: { place?: Place; category?: Category }) => {
+    if (openItem) dispatch({ type: 'updateItem', name: openItem.name, changes })
+  }
+  const open = (name: string) => {
+    setOpenName(name)
+    setEditing(false)
   }
 
   return (
@@ -92,7 +102,7 @@ export function KitchenScreen() {
                       ) : (
                         <div className="chips">
                           {items.map((it) => (
-                            <ItemChip key={it.id} item={it} onOpen={() => setOpenName(it.name)} />
+                            <ItemChip key={it.id} item={it} onOpen={() => open(it.name)} />
                           ))}
                         </div>
                       )}
@@ -111,7 +121,7 @@ export function KitchenScreen() {
                 ) : (
                   <div className="chips">
                     {pantry.map((it) => (
-                      <ItemChip key={it.id} item={it} onOpen={() => setOpenName(it.name)} />
+                      <ItemChip key={it.id} item={it} onOpen={() => open(it.name)} />
                     ))}
                   </div>
                 )}
@@ -136,7 +146,7 @@ export function KitchenScreen() {
                       type="button"
                       className="row"
                       aria-label={`${it.name}, 남은 양 ${LEVEL_LABEL[it.level]}`}
-                      onClick={() => setOpenName(it.name)}
+                      onClick={() => open(it.name)}
                     >
                       <span className="row-main">
                         {it.name}
@@ -170,6 +180,56 @@ export function KitchenScreen() {
           </div>
           <LevelPicker label="남은 양" value={openItem.level} onChange={setLevel} />
           {openItem.level === 0 && <p className="note-warn">다 떨어졌네요. 장바구니에 자동으로 담았어요.</p>}
+
+          <div className="edit-box">
+            <button
+              type="button"
+              className="edit-toggle"
+              aria-expanded={editing}
+              onClick={() => setEditing((v) => !v)}
+            >
+              <span>
+                {PLACE_LABEL[openItem.place]} · {CATEGORY_LABEL[openItem.category]}
+              </span>
+              <span className="edit-toggle-cta">{editing ? '닫기' : '칸·카테고리 바꾸기'}</span>
+            </button>
+            {editing && (
+              <>
+                <div className="field">
+                  <span className="field-label">어디에 둘까요?</span>
+                  <div className="chips">
+                    {PLACES.map((p) => (
+                      <button
+                        key={p}
+                        type="button"
+                        className="pill"
+                        aria-pressed={openItem.place === p}
+                        onClick={() => update({ place: p })}
+                      >
+                        {PLACE_LABEL[p]}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                <div className="field">
+                  <span className="field-label">카테고리</span>
+                  <div className="chips">
+                    {CATEGORIES.map((c) => (
+                      <button
+                        key={c}
+                        type="button"
+                        className="pill"
+                        aria-pressed={openItem.category === c}
+                        onClick={() => update({ category: c })}
+                      >
+                        {CATEGORY_LABEL[c]}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
+          </div>
           <button type="button" className="btn" onClick={() => setOpenName(null)}>
             완료
           </button>

@@ -10,6 +10,7 @@ export type KitchenAction =
   | { type: 'addItems'; items: CatalogItem[] }
   | { type: 'setLevel'; name: string; level: Level }
   | { type: 'removeItem'; name: string }
+  | { type: 'updateItem'; name: string; changes: Partial<Pick<FridgeItem, 'place' | 'category'>> }
   | { type: 'addToCart'; name: string; source: CartItem['source']; note?: string }
   | { type: 'toggleCartDone'; id: string }
   | { type: 'removeFromCart'; id: string }
@@ -47,6 +48,14 @@ export function kitchenReducer(state: KitchenState, action: KitchenAction): Kitc
       const cart = action.level === 0 ? upsertCart(state.cart, action.name, 'auto') : state.cart
       return { fridge, cart }
     }
+
+    case 'updateItem':
+      return {
+        ...state,
+        fridge: state.fridge.map((f) =>
+          f.name === action.name ? { ...f, ...action.changes, updatedAt: Date.now() } : f,
+        ),
+      }
 
     case 'removeItem':
       return { ...state, fridge: state.fridge.filter((f) => f.name !== action.name) }
