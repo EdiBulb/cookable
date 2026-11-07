@@ -7,6 +7,15 @@
     <title>Cookable — 냉장고 재료로 오늘 뭐 해 먹지?</title>
     <meta name="theme-color" content="#1f6b45" />
     <meta name="description" content="냉장고 재료로 만들 수 있는 요리를 추천하고, 다 떨어진 재료는 장바구니에 자동으로 담아 주는 앱" />
+    <script>
+      // 카카오톡 인앱 브라우저로 열리면 휴대폰 기본 브라우저(크롬/사파리 등)로 다시 연다.
+      // 데이터는 브라우저마다 따로 저장되므로, 한 브라우저에서 계속 쓰게 하려는 목적.
+      (function () {
+        if (/KAKAOTALK/i.test(navigator.userAgent || '')) {
+          location.href = 'kakaotalk://web/openExternal?url=' + encodeURIComponent(location.href)
+        }
+      })()
+    </script>
   </head>
   <body>
     <div id="root"></div>
