@@ -45,5 +45,9 @@ npm run build   # dist/ 에 정적 파일 생성
 - 요리 기록 · 요리별 레벨 · 자주 해먹는 요리 기반 재료 추천
 - 유통기한 알림
 - 재료 사진 (브랜드가 중요한 재료)
-- 공공 레시피 API 데이터 가져와서 레시피 늘리기
+- **[보류] 식품안전나라 레시피 API 연동** — 본인인증(한국 휴대폰 문자)이 가능해지면 진행
+  1. foodsafetykorea.go.kr 개인회원 가입 → 데이터활용서비스에서 '조리식품의 레시피 DB'(COOKRCP01) 이용신청 (무료, 자동 승인)
+  2. `https://openapi.foodsafetykorea.go.kr/api/<인증키>/COOKRCP01/json/1/5` 로 응답 확인
+  3. GitHub → Settings → Secrets and variables → Actions → `FOOD_API_KEY` 등록
+  4. 빌드 때 레시피를 받아 재료 이름 필터링(청소 → 목록 → 별칭 → 포함 검사), 모르는 재료가 남은 레시피는 제외하고 리포트 출력
 - 로그인 + 서버 동기화 (여러 기기에서 같은 냉장고)
