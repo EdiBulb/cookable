@@ -177,6 +177,21 @@ a { color: var(--brand); }
 .note-warn { margin: 0; padding: 12px 14px; border-radius: 12px; background: var(--warn-soft); color: var(--warn-text); font-size: 14px; font-weight: 500; }
 .note-good { margin: 0; padding: 12px 14px; border-radius: 12px; background: var(--brand-soft); color: var(--brand); font-size: 14px; font-weight: 500; text-align: center; }
 
+/* 설정 */
+.settings-hero { background: var(--brand-soft); border-radius: 16px; padding: 14px 16px; color: var(--brand); }
+.settings-hero p { margin: 0; }
+.settings-hero-label { font-size: 13px; font-weight: 700; }
+.settings-hero-value { margin-top: 2px !important; font-size: 18px; font-weight: 900; color: var(--brand-dark); }
+.settings-hero-note { margin-top: 4px !important; font-size: 12px; }
+.settings-install { display: flex; align-items: center; gap: 12px; padding: 14px 16px; }
+.settings-row { text-decoration: none; color: var(--ink); min-height: 56px; }
+.settings-row a { color: var(--brand); }
+.switch { flex: none; width: 44px; height: 26px; border-radius: 13px; background: var(--empty); position: relative; transition: background 0.15s; }
+.switch span { position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 10px; background: #fff; transition: left 0.15s; }
+.switch[data-on='true'] { background: var(--brand); }
+.switch[data-on='true'] span { left: 21px; }
+.guide-steps { margin: 0; padding-left: 20px; display: flex; flex-direction: column; gap: 8px; font-size: 15px; line-height: 1.6; }
+
 /* 칸·카테고리 바꾸기 */
 .edit-box { display: flex; flex-direction: column; gap: 14px; padding: 12px 14px; border-radius: var(--radius); background: var(--bg); }
 .edit-toggle { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 44px; border: 0; background: transparent; padding: 0; text-align: left; font-size: 14px; color: var(--ink-2); }

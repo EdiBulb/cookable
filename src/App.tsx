@@ -9,6 +9,7 @@ import { AddIngredientsScreen } from './screens/AddIngredientsScreen'
 import { RecipesScreen } from './screens/RecipesScreen'
 import { RecipeDetailScreen } from './screens/RecipeDetailScreen'
 import { CartScreen } from './screens/CartScreen'
+import { SettingsScreen } from './screens/SettingsScreen'
 
 /** 탭바는 메인 탭 화면에서만 보여준다. 첫 화면은 레시피(앱을 여는 이유) */
 const TAB_ROUTES = ['/', '/kitchen', '/cart']
@@ -27,6 +28,7 @@ function Shell() {
         <Route path="/add" element={<AddIngredientsScreen />} />
         <Route path="/recipes/:id" element={<RecipeDetailScreen />} />
         <Route path="/cart" element={<CartScreen />} />
+        <Route path="/settings" element={<SettingsScreen />} />
         <Route path="*" element={<RecipesScreen />} />
       </Routes>
       {TAB_ROUTES.includes(pathname) && <TabBar />}

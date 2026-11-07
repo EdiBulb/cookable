@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { Link, useNavigate } from 'react-router-dom'
 import { track } from '../lib/analytics'
 import type { CartItem } from '../types'
 import { useKitchen } from '../store/KitchenContext'
@@ -37,10 +37,18 @@ export function CartScreen() {
 
   return (
     <main className="screen" style={{ paddingBottom: 190 }}>
-      <header>
-        <span className="eyebrow">Cookable</span>
-        <h1 className="title">장바구니</h1>
-        <p className="subtitle">이번 장보기 목록 · 산 건 체크해 주세요</p>
+      <header style={{ display: 'flex', alignItems: 'flex-start', gap: 12 }}>
+        <div style={{ flex: 1 }}>
+          <span className="eyebrow">Cookable</span>
+          <h1 className="title">장바구니</h1>
+          <p className="subtitle">이번 장보기 목록 · 산 건 체크해 주세요</p>
+        </div>
+        <Link to="/settings" className="icon-btn" aria-label="설정">
+          <svg aria-hidden="true" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M10.3 4.3a1.7 1.7 0 0 1 3.4 0 1.7 1.7 0 0 0 2.6 1.1 1.7 1.7 0 0 1 2.3 2.3 1.7 1.7 0 0 0 1.1 2.6 1.7 1.7 0 0 1 0 3.4 1.7 1.7 0 0 0-1.1 2.6 1.7 1.7 0 0 1-2.3 2.3 1.7 1.7 0 0 0-2.6 1.1 1.7 1.7 0 0 1-3.4 0 1.7 1.7 0 0 0-2.6-1.1 1.7 1.7 0 0 1-2.3-2.3 1.7 1.7 0 0 0-1.1-2.6 1.7 1.7 0 0 1 0-3.4 1.7 1.7 0 0 0 1.1-2.6 1.7 1.7 0 0 1 2.3-2.3 1.7 1.7 0 0 0 2.6-1.1z" />
+            <circle cx="12" cy="12" r="3" />
+          </svg>
+        </Link>
       </header>
 
       <form onSubmit={addManual} className="search" style={{ paddingRight: 6 }}>
