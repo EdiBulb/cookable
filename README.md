@@ -50,4 +50,8 @@ npm run build   # dist/ 에 정적 파일 생성
   2. `https://openapi.foodsafetykorea.go.kr/api/<인증키>/COOKRCP01/json/1/5` 로 응답 확인
   3. GitHub → Settings → Secrets and variables → Actions → `FOOD_API_KEY` 등록
   4. 빌드 때 레시피를 받아 재료 이름 필터링(청소 → 목록 → 별칭 → 포함 검사), 모르는 재료가 남은 레시피는 제외하고 리포트 출력
-- 로그인 + 서버 동기화 (여러 기기에서 같은 냉장고)
+- **선택 로그인 "내 냉장고 기억하기"** (구글 로그인 + Supabase 백업) — 로그인 없이 쓰다가 원할 때만 로그인
+  - 권유 시점: 재료를 어느 정도 넣은 뒤(예: 10개 이상), 장보기 끝을 누른 직후 — 지킬 데이터가 생겼을 때
+  - 첫 로그인 때 폰(localStorage)에 있던 냉장고·장바구니를 서버로 옮기기
+  - 필요한 것: Supabase 프로젝트, 구글 OAuth 설정, 개인정보처리방침 페이지
+  - 카카오톡 인앱 브라우저는 구글 로그인이 막히므로 외부 브라우저 전환 유지
