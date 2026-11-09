@@ -6,11 +6,12 @@ import { recommend, searchRecipes, type Match } from '../lib/recommend'
 import { useKitchen } from '../store/KitchenContext'
 import type { RecipeType } from '../types'
 import { SearchIcon } from '../components/icons'
+import { dayLabel, urgencyOf, urgentItems } from '../lib/expiry'
 
 /** 레시피 카드 한 장: 부족한 재료가 있으면 바로 장바구니에 담을 수 있다 */
 function RecipeCard({ match }: { match: Match }) {
   const { state, dispatch } = useKitchen()
-  const { recipe, needed, missing } = match
+  const { recipe, needed, missing, uses } = match
   const inCart = new Set(state.cart.filter((c) => !c.done).map((c) => c.name))
   const toBuy = missing.filter((m) => !inCart.has(m))
   const ready = missing.length === 0
@@ -41,6 +42,11 @@ function RecipeCard({ match }: { match: Match }) {
           ) : (
             <p className="recipe-meta">
               없는 재료: <b style={{ color: '#b4531a' }}>{missing.join(', ')}</b>
+            </p>
+          )}
+          {uses && uses.length > 0 && (
+            <p className="recipe-rescue">
+              {uses.map((u) => `${u.name} ${dayLabel(u.days)}`).join(' · ')} 사용
             </p>
           )}
         </span>
@@ -80,6 +86,8 @@ export function RecipesScreen() {
   const { canCook, oneMore } = recommend(pool, state.fridge)
   const results = searchRecipes(RECIPES, state.fridge, q)
   const emptyFridge = state.fridge.length === 0
+  // 지난 재료는 추천하지 않고, 오늘~3일 안에 먹을 재료만
+  const eatFirst = urgentItems(state.fridge).filter((u) => u.days >= 0)
 
   // 첫 화면에서 추천이 몇 개 나왔는지 (앱의 핵심 지표)
   useEffect(() => {
@@ -152,6 +160,32 @@ export function RecipesScreen() {
         </div>
       ) : (
         <>
+          {eatFirst.length > 0 && (
+            <section className="eat-first" aria-label="먼저 먹어야 할 재료">
+              <p className="eat-first-title">먼저 먹어야 해요</p>
+              <div className="chips">
+                {eatFirst.map((u) => (
+                  <button
+                    key={u.name}
+                    type="button"
+                    className="eat-chip"
+                    onClick={() => {
+                      setQuery(u.name)
+                      track('eat_first_tap', { days: u.days })
+                    }}
+                  >
+                    {u.name}
+                    <span className="dday" data-u={urgencyOf(u.days)}>
+                      {dayLabel(u.days)}
+                    </span>
+                  </button>
+                ))}
+              </div>
+              <p className="subtitle" style={{ margin: 0, fontSize: 12 }}>
+                누르면 그 재료로 만들 수 있는 요리를 찾아요 · 아래 추천도 이 재료를 쓰는 요리부터 보여 드려요
+              </p>
+            </section>
+          )}
           <div className="pills" role="group" aria-label="요리 종류">
             {(['all', ...TYPES] as const).map((t) => (
               <button

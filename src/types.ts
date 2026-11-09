@@ -27,6 +27,10 @@ export interface FridgeItem {
   place: Place
   level: Level
   updatedAt: number
+  /** 냉장고에 넣은(산) 날 — 유통기한 자동 계산의 기준 */
+  addedAt?: number
+  /** 사용자가 직접 정한 "언제까지 먹을까" (그날 0시 타임스탬프). 없으면 자동 계산 */
+  useBy?: number
 }
 
 export type CartSource = 'auto' | 'recipe' | 'manual'

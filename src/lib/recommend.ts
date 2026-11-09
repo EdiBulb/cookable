@@ -1,4 +1,5 @@
 import type { FridgeItem, Recipe } from '../types'
+import { urgentItems } from './expiry'
 
 /** 거의 모든 집에 있다고 보고 매칭에서 빼는 기본 양념 · 고명 */
 export const STAPLES = new Set(['소금', '후추', '식용유', '설탕', '물', '참깨', '통깨'])
@@ -50,6 +51,8 @@ export interface Match {
   /** 기본 양념을 뺀, 실제로 필요한 재료 */
   needed: string[]
   missing: string[]
+  /** 이 요리에 쓰이는, 빨리 먹어야 하는 내 재료 (급한 순) */
+  uses?: { name: string; days: number }[]
 }
 
 export function matchRecipe(recipe: Recipe, owned: Set<string>): Match {
@@ -84,13 +87,33 @@ export interface Recommendation {
 
 /**
  * 냉장고 재료로 만들 수 있는 요리 / 하나만 더 사면 되는 요리를 고른다.
- * 정렬: 내가 가진 재료를 많이 쓰는 요리일수록 앞에 (냉장고 비우기에 유리).
+ * 정렬: 빨리 먹어야 하는 재료를 쓰는 요리 먼저, 그다음 내 재료를 많이 쓰는 요리.
  */
-export function recommend(recipes: Recipe[], fridge: FridgeItem[]): Recommendation {
+export function recommend(recipes: Recipe[], fridge: FridgeItem[], now = Date.now()): Recommendation {
   const owned = ownedSet(fridge)
-  const matches = recipes.map((r) => matchRecipe(r, owned))
+
+  // 3일 안에 먹어야 하는 재료 (지난 건 추천에 쓰지 않는다)
+  const urgent = new Map<string, { name: string; days: number }>()
+  for (const u of urgentItems(fridge, now)) {
+    if (u.days < 0) continue
+    const key = normalize(u.name)
+    const prev = urgent.get(key)
+    if (!prev || u.days < prev.days) urgent.set(key, u)
+  }
+
+  const matches = recipes.map((r) => {
+    const m = matchRecipe(r, owned)
+    const uses = m.needed
+      .filter((n) => urgent.has(n))
+      .map((n) => urgent.get(n)!)
+      .sort((a, b) => a.days - b.days)
+    return uses.length > 0 ? { ...m, uses } : m
+  })
+
+  // 급한 재료를 쓸수록 (그리고 더 급할수록) 앞으로
+  const rescue = (m: Match) => (m.uses ?? []).reduce((s, u) => s + (4 - u.days), 0)
   const byUsage = (a: Match, b: Match) =>
-    b.needed.length - b.missing.length - (a.needed.length - a.missing.length)
+    rescue(b) - rescue(a) || b.needed.length - b.missing.length - (a.needed.length - a.missing.length)
 
   return {
     canCook: matches.filter((m) => m.missing.length === 0).sort(byUsage),

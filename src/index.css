@@ -294,3 +294,20 @@ a { color: var(--brand); }
 @media (prefers-reduced-motion: reduce) {
   .splash { display: none; }
 }
+
+/* 유통기한 (먼저 먹을 재료) */
+.dday { flex: none; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: var(--brand-soft); color: var(--brand-dark); white-space: nowrap; }
+.dday[data-u='near'] { background: #fff6d6; color: #7a5a00; }
+.dday[data-u='soon'] { background: var(--warn-soft); color: var(--warn-text); }
+.dday[data-u='over'] { background: #fde8e8; color: #a32d2d; }
+.dday[data-u='off'] { background: transparent; color: var(--muted); font-weight: 500; padding: 0; }
+.chip .dday { margin-left: 2px; }
+.eat-first { display: flex; flex-direction: column; gap: 10px; padding: 14px 16px; border-radius: var(--radius); background: var(--surface); border: 1px solid var(--warn-line); }
+.eat-first-title { margin: 0; font-size: 15px; font-weight: 700; }
+.eat-first .chips { gap: 6px; }
+.eat-chip { display: inline-flex; align-items: center; gap: 6px; height: 34px; padding: 0 12px; border-radius: 17px; border: 1px solid var(--border); background: var(--surface); font-size: 14px; font-weight: 500; color: var(--ink); }
+.recipe-rescue { margin: 4px 0 0; font-size: 12px; font-weight: 700; color: var(--warn-text); }
+.useby-opts { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; }
+.useby-opts .pill { width: 100%; }
+.useby-opts .pill small { font-weight: 500; opacity: 0.75; margin-left: 4px; }
+.link-btn { border: 0; background: transparent; padding: 0; min-height: 36px; font-size: 13px; font-weight: 700; color: var(--brand); text-align: left; }

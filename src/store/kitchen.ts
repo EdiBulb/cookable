@@ -11,6 +11,8 @@ export type KitchenAction =
   | { type: 'setLevel'; name: string; level: Level }
   | { type: 'removeItem'; name: string }
   | { type: 'updateItem'; name: string; changes: Partial<Pick<FridgeItem, 'place' | 'category'>> }
+  /** 언제까지 먹을지 직접 정하기 (0시 타임스탬프). null = 자동 계산으로 되돌리기 */
+  | { type: 'setUseBy'; name: string; useBy: number | null }
   | { type: 'addToCart'; name: string; source: CartItem['source']; note?: string }
   | { type: 'toggleCartDone'; id: string }
   | { type: 'removeFromCart'; id: string }
@@ -32,9 +34,12 @@ export function kitchenReducer(state: KitchenState, action: KitchenAction): Kitc
       for (const it of action.items) {
         const existing = fridge.findIndex((f) => f.name === it.name)
         if (existing >= 0) {
-          fridge[existing] = { ...fridge[existing], level: 5, updatedAt: now }
+          // 다시 샀으면 날짜도 새로 시작
+          const { useBy: _old, ...rest } = fridge[existing]
+          void _old
+          fridge[existing] = { ...rest, level: 5, updatedAt: now, addedAt: now }
         } else {
-          fridge.push({ id: uid(), ...it, level: 5, updatedAt: now })
+          fridge.push({ id: uid(), name: it.name, category: it.category, place: it.place, level: 5, updatedAt: now, addedAt: now })
         }
       }
       return { ...state, fridge }
@@ -55,6 +60,20 @@ export function kitchenReducer(state: KitchenState, action: KitchenAction): Kitc
         fridge: state.fridge.map((f) =>
           f.name === action.name ? { ...f, ...action.changes, updatedAt: Date.now() } : f,
         ),
+      }
+
+    case 'setUseBy':
+      return {
+        ...state,
+        fridge: state.fridge.map((f) => {
+          if (f.name !== action.name) return f
+          if (action.useBy === null) {
+            const { useBy: _old, ...rest } = f
+            void _old
+            return rest
+          }
+          return { ...f, useBy: action.useBy }
+        }),
       }
 
     case 'removeItem':

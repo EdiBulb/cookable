@@ -9,7 +9,9 @@ function load(): KitchenState {
     if (!raw) return EMPTY_KITCHEN
     const parsed = JSON.parse(raw) as KitchenState
     if (!Array.isArray(parsed.fridge) || !Array.isArray(parsed.cart)) return EMPTY_KITCHEN
-    return parsed
+    // 유통기한 기능 이전에 넣은 재료는 업데이트한 오늘 넣은 것으로 본다
+    const now = Date.now()
+    return { ...parsed, fridge: parsed.fridge.map((f) => (f.addedAt ? f : { ...f, addedAt: now })) }
   } catch {
     return EMPTY_KITCHEN
   }

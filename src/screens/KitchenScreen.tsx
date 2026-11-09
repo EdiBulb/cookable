@@ -7,6 +7,8 @@ import { track } from '../lib/analytics'
 import { BottomSheet } from '../components/BottomSheet'
 import { LEVEL_LABEL, LevelBars, LevelPicker, levelTextColor } from '../components/level'
 import { CartIcon, ChevronIcon, PlusIcon } from '../components/icons'
+import { DdayBadge, UseByEditor } from '../components/expiry'
+import { dayLabel, daysLeft, urgencyOf, urgentItems } from '../lib/expiry'
 
 const PLACES: Place[] = [...FRIDGE_PLACES, 'pantry']
 
@@ -20,6 +22,7 @@ function ItemChip({ item, onOpen }: { item: FridgeItem; onOpen: () => void }) {
       onClick={onOpen}
     >
       <span>{item.name}</span>
+      <DdayBadge item={item} onlyUrgent />
       <LevelBars level={item.level} />
     </button>
   )
@@ -36,6 +39,10 @@ export function KitchenScreen() {
   const lowCount = fridge.filter((f) => f.level <= 1).length
   const byPlace = (place: FridgeItem['place']) => fridge.filter((f) => f.place === place)
   const pantry = byPlace('pantry')
+  const urgent = urgentItems(fridge)
+  // 전체 보기에서는 급한 재료가 위로 (날짜를 세지 않는 재료는 맨 아래)
+  const byUrgency = (a: FridgeItem, b: FridgeItem) =>
+    (daysLeft(a) ?? Infinity) - (daysLeft(b) ?? Infinity)
 
   const setLevel = (level: Level) => {
     if (!openItem) return
@@ -67,6 +74,22 @@ export function KitchenScreen() {
           </span>
           <ChevronIcon style={{ color: 'var(--warn-text)', flex: 'none' }} />
         </Link>
+      )}
+
+      {urgent.length > 0 && (
+        <section className="eat-first" aria-label="먼저 먹어야 할 재료">
+          <p className="eat-first-title">먼저 먹어야 해요</p>
+          <div className="chips">
+            {urgent.map((u) => (
+              <button key={u.name} type="button" className="eat-chip" onClick={() => open(u.name)}>
+                {u.name}
+                <span className="dday" data-u={urgencyOf(u.days)}>
+                  {dayLabel(u.days)}
+                </span>
+              </button>
+            ))}
+          </div>
+        </section>
       )}
 
       {fridge.length === 0 ? (
@@ -132,12 +155,12 @@ export function KitchenScreen() {
                 )}
               </section>
               <p className="subtitle" style={{ textAlign: 'center', fontSize: 12 }}>
-                재료를 누르면 남은 양을 바로 바꿀 수 있어요
+                재료를 누르면 남은 양과 먹을 날짜를 바로 바꿀 수 있어요
               </p>
             </>
           ) : (
             CATEGORIES.map((cat) => {
-              const items = fridge.filter((f) => f.category === cat)
+              const items = fridge.filter((f) => f.category === cat).sort(byUrgency)
               if (items.length === 0) return null
               return (
                 <section key={cat} className="card">
@@ -157,6 +180,7 @@ export function KitchenScreen() {
                         {it.name}
                         <span className="row-sub">{PLACE_LABEL[it.place]}</span>
                       </span>
+                      <DdayBadge item={it} />
                       <span className="tag" style={{ color: levelTextColor(it.level) }}>
                         {LEVEL_LABEL[it.level]}
                       </span>
@@ -176,7 +200,7 @@ export function KitchenScreen() {
       </Link>
 
       {openItem && (
-        <BottomSheet label="남은 양 체크" onClose={() => setOpenName(null)}>
+        <BottomSheet label="재료 상태" onClose={() => setOpenName(null)}>
           <div>
             <p className="subtitle" style={{ margin: 0 }}>
               남은 양 체크 · {PLACE_LABEL[openItem.place]}
@@ -185,6 +209,15 @@ export function KitchenScreen() {
           </div>
           <LevelPicker label="남은 양" value={openItem.level} onChange={setLevel} />
           {openItem.level === 0 && <p className="note-warn">다 떨어졌네요. 장바구니에 자동으로 담았어요.</p>}
+          {openItem.level > 0 && (
+            <UseByEditor
+              item={openItem}
+              onChange={(useBy) => {
+                track('useby_changed', { auto: useBy === null })
+                dispatch({ type: 'setUseBy', name: openItem.name, useBy })
+              }}
+            />
+          )}
 
           <div className="edit-box">
             <button
