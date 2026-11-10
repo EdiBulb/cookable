@@ -5,7 +5,8 @@ import { RECIPES } from '../data/recipes'
 import { recommend, searchRecipes, type Match } from '../lib/recommend'
 import { useKitchen } from '../store/KitchenContext'
 import type { RecipeType } from '../types'
-import { ChevronIcon, SearchIcon } from '../components/icons'
+import { ChevronIcon, GridIcon, ListIcon, SearchIcon } from '../components/icons'
+import { RecipeThumb } from '../components/RecipeThumb'
 import { dayLabel, urgencyOf, urgentItems } from '../lib/expiry'
 import { blockedBy, dietSummary, isDietActive, isLight, isMild } from '../lib/diet'
 import { useDiet } from '../store/diet'
@@ -35,9 +36,7 @@ function RecipeCard({ match, blocked = [] }: { match: Match; blocked?: string[] 
         to={`/recipes/${recipe.id}`}
         style={{ display: 'flex', gap: 14, alignItems: 'center', textDecoration: 'none', color: 'inherit' }}
       >
-        <span className="recipe-thumb" aria-hidden="true">
-          {recipe.name[0]}
-        </span>
+        <RecipeThumb recipe={recipe} />
         <span style={{ flex: 1, minWidth: 0 }}>
           <h3>{recipe.name}</h3>
           <p className="recipe-meta">
@@ -82,6 +81,81 @@ function RecipeCard({ match, blocked = [] }: { match: Match; blocked?: string[] 
   )
 }
 
+/** 타일 한 장: 사진 + 작은 이름 (자세한 건 누르면 상세에서) */
+function RecipeTile({ match, blocked = [] }: { match: Match; blocked?: string[] }) {
+  const { recipe, missing, uses } = match
+  const ready = missing.length === 0
+  const isBlocked = blocked.length > 0
+  return (
+    <Link
+      to={`/recipes/${recipe.id}`}
+      className={`recipe-tile${isBlocked ? ' recipe-card--blocked' : ''}`}
+      aria-label={`${recipe.name}, ${isBlocked ? '내 식단에 맞지 않아요' : ready ? '바로 만들 수 있어요' : `재료 ${missing.length}개 부족`}`}
+    >
+      <span className="tile-photo-wrap">
+        <RecipeThumb recipe={recipe} className="tile-photo" />
+        {!isBlocked && (
+          <span className="tile-badge" data-ready={ready}>
+            {ready ? '바로 가능' : `${missing.length}개 부족`}
+          </span>
+        )}
+      </span>
+      <span className="tile-name">{recipe.name}</span>
+      {isBlocked ? (
+        <span className="tile-sub tile-sub--blocked">식단에 안 맞음</span>
+      ) : uses && uses.length > 0 ? (
+        <span className="tile-sub tile-sub--rescue">
+          {uses[0].name} {dayLabel(uses[0].days)}
+        </span>
+      ) : null}
+    </Link>
+  )
+}
+
+type RecipeView = 'tile' | 'list'
+const VIEW_KEY = 'cookable:recipe-view'
+
+function readView(): RecipeView {
+  try {
+    return localStorage.getItem(VIEW_KEY) === 'list' ? 'list' : 'tile'
+  } catch {
+    return 'tile'
+  }
+}
+
+function ViewToggle({ view, onChange }: { view: RecipeView; onChange: (v: RecipeView) => void }) {
+  return (
+    <div className="view-toggle" role="group" aria-label="보기 방식">
+      <button type="button" aria-label="타일로 보기" aria-pressed={view === 'tile'} onClick={() => onChange('tile')}>
+        <GridIcon size={18} />
+      </button>
+      <button type="button" aria-label="목록으로 보기" aria-pressed={view === 'list'} onClick={() => onChange('list')}>
+        <ListIcon size={18} />
+      </button>
+    </div>
+  )
+}
+
+/** 보기 방식에 따라 타일 격자 또는 카드 목록 */
+function RecipeResults({ items, view }: { items: { m: Match; blocked?: string[] }[]; view: RecipeView }) {
+  if (view === 'tile') {
+    return (
+      <div className="recipe-grid">
+        {items.map(({ m, blocked }) => (
+          <RecipeTile key={m.recipe.id} match={m} blocked={blocked} />
+        ))}
+      </div>
+    )
+  }
+  return (
+    <>
+      {items.map(({ m, blocked }) => (
+        <RecipeCard key={m.recipe.id} match={m} blocked={blocked} />
+      ))}
+    </>
+  )
+}
+
 const TYPES: RecipeType[] = ['국·찌개', '밥·덮밥', '면', '볶음·구이', '반찬', '분식·간식', '양식']
 
 export function RecipesScreen() {
@@ -90,6 +164,16 @@ export function RecipesScreen() {
   const [type, setType] = useState<RecipeType | 'all'>('all')
   const [light, setLight] = useState(false)
   const [mild, setMild] = useState(false)
+  const [view, setViewState] = useState<RecipeView>(readView)
+  const setView = (v: RecipeView) => {
+    setViewState(v)
+    try {
+      localStorage.setItem(VIEW_KEY, v)
+    } catch {
+      // 저장이 막힌 환경이면 이번만
+    }
+    track('recipe_view_mode', { view: v })
+  }
   const diet = useDiet()
   const dietOn = isDietActive(diet)
   const q = query.trim()
@@ -150,6 +234,7 @@ export function RecipesScreen() {
           <div className="section-head">
             <h2 className="section-title">"{q}" 검색 결과</h2>
             <span className="count">{results.length}개</span>
+            <ViewToggle view={view} onChange={setView} />
           </div>
           {results.length === 0 ? (
             <div className="empty-state">
@@ -164,9 +249,7 @@ export function RecipesScreen() {
               <p className="subtitle" style={{ margin: 0 }}>
                 내 냉장고 기준으로 부족한 재료를 보여드려요
               </p>
-              {results.map(({ m, blocked }) => (
-                <RecipeCard key={m.recipe.id} match={m} blocked={blocked} />
-              ))}
+              <RecipeResults items={results} view={view} />
             </>
           )}
         </section>
@@ -261,13 +344,14 @@ export function RecipesScreen() {
             <div className="section-head">
               <h2 className="section-title">지금 바로 만들 수 있어요</h2>
               <span className="count">{canCook.length}개</span>
+              <ViewToggle view={view} onChange={setView} />
             </div>
             {canCook.length === 0 ? (
               <div className="empty-state">
                 <p>아직 재료가 다 갖춰진 요리가 없어요. 아래에서 하나만 더 사면 되는 요리를 확인해 보세요.</p>
               </div>
             ) : (
-              canCook.map((m) => <RecipeCard key={m.recipe.id} match={m} />)
+              <RecipeResults items={canCook.map((m) => ({ m }))} view={view} />
             )}
           </section>
 
@@ -275,11 +359,11 @@ export function RecipesScreen() {
             <section style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div>
                 <h2 className="section-title">하나만 더 사면 돼요</h2>
-                <p className="subtitle">부족한 재료를 바로 장바구니에 담을 수 있어요</p>
+                <p className="subtitle">
+                  {view === 'list' ? '부족한 재료를 바로 장바구니에 담을 수 있어요' : '누르면 부족한 재료를 확인하고 장바구니에 담을 수 있어요'}
+                </p>
               </div>
-              {oneMore.map((m) => (
-                <RecipeCard key={m.recipe.id} match={m} />
-              ))}
+              <RecipeResults items={oneMore.map((m) => ({ m }))} view={view} />
             </section>
           )}
         </>

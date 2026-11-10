@@ -12,15 +12,27 @@ import { dayLabel, daysLeft, urgencyOf, urgentItems } from '../lib/expiry'
 
 const PLACES: Place[] = [...FRIDGE_PLACES, 'pantry']
 
-function ItemChip({ item, onOpen }: { item: FridgeItem; onOpen: () => void }) {
+function ItemChip({
+  item,
+  onOpen,
+  selected,
+}: {
+  item: FridgeItem
+  onOpen: () => void
+  /** 편집 중이면 true/false, 아니면 undefined */
+  selected?: boolean
+}) {
+  const selecting = selected !== undefined
   return (
     <button
       type="button"
-      className="chip"
+      className={`chip${selecting ? ' chip--select' : ''}`}
       data-level={item.level}
-      aria-label={`${item.name}, 남은 양 ${LEVEL_LABEL[item.level]}`}
+      aria-pressed={selecting ? selected : undefined}
+      aria-label={`${item.name}, 남은 양 ${LEVEL_LABEL[item.level]}${selecting ? (selected ? ', 선택됨' : '') : ''}`}
       onClick={onOpen}
     >
+      {selecting && <span className="select-dot" aria-hidden="true" />}
       <span>{item.name}</span>
       <DdayBadge item={item} onlyUrgent />
       <LevelBars level={item.level} />
@@ -33,6 +45,10 @@ export function KitchenScreen() {
   const [view, setView] = useState<'fridge' | 'list'>('fridge')
   const [openName, setOpenName] = useState<string | null>(null)
   const [editing, setEditing] = useState(false)
+  // 편집 모드: 여러 재료를 골라 한 번에 빼거나 다 떨어짐 처리
+  const [selecting, setSelecting] = useState(false)
+  const [selected, setSelected] = useState<Set<string>>(new Set())
+  const [confirmRemove, setConfirmRemove] = useState(false)
 
   const fridge = state.fridge
   const openItem = fridge.find((f) => f.name === openName) ?? null
@@ -55,18 +71,69 @@ export function KitchenScreen() {
     dispatch({ type: 'updateItem', name: openItem.name, changes })
   }
   const open = (name: string) => {
+    if (selecting) {
+      setSelected((prev) => {
+        const next = new Set(prev)
+        if (next.has(name)) next.delete(name)
+        else next.add(name)
+        return next
+      })
+      return
+    }
     setOpenName(name)
     setEditing(false)
   }
 
+  const startSelecting = () => {
+    setSelecting(true)
+    setSelected(new Set())
+    track('kitchen_edit_start', { fridge_count: fridge.length })
+  }
+  const stopSelecting = () => {
+    setSelecting(false)
+    setSelected(new Set())
+  }
+  const allSelected = fridge.length > 0 && selected.size === fridge.length
+  const toggleAll = () => setSelected(allSelected ? new Set() : new Set(fridge.map((f) => f.name)))
+  const sel = (name: string) => (selecting ? selected.has(name) : undefined)
+
+  const emptySelected = () => {
+    const names = [...selected].filter((n) => (fridge.find((f) => f.name === n)?.level ?? 0) > 0)
+    track('kitchen_bulk', { action: 'empty', count: names.length, all: allSelected })
+    dispatch({ type: 'emptyItems', names })
+    stopSelecting()
+  }
+  const removeSelected = () => {
+    track('kitchen_bulk', { action: 'remove', count: selected.size, all: allSelected })
+    dispatch({ type: 'removeItems', names: [...selected] })
+    setConfirmRemove(false)
+    stopSelecting()
+  }
+
   return (
     <main className="screen">
-      <header>
-        <span className="eyebrow">Cookable</span>
-        <h1 className="title">내 주방</h1>
+      <header className="kitchen-head">
+        <div>
+          <span className="eyebrow">Cookable</span>
+          <h1 className="title">내 주방</h1>
+        </div>
+        {fridge.length > 0 && (
+          <button type="button" className="text-btn" onClick={selecting ? stopSelecting : startSelecting}>
+            {selecting ? '완료' : '편집'}
+          </button>
+        )}
       </header>
 
-      {lowCount > 0 && (
+      {selecting && (
+        <div className="select-bar">
+          <span>재료를 눌러서 고르세요 · {selected.size}개 선택</span>
+          <button type="button" className="text-btn" onClick={toggleAll}>
+            {allSelected ? '선택 해제' : '전체 선택'}
+          </button>
+        </div>
+      )}
+
+      {!selecting && lowCount > 0 && (
         <Link to="/cart" className="alert">
           <CartIcon size={22} style={{ color: '#b4531a', flex: 'none' }} />
           <span style={{ flex: 1 }}>
@@ -76,7 +143,7 @@ export function KitchenScreen() {
         </Link>
       )}
 
-      {urgent.length > 0 && (
+      {!selecting && urgent.length > 0 && (
         <section className="eat-first" aria-label="먼저 먹어야 할 재료">
           <p className="eat-first-title">먼저 먹어야 해요</p>
           <div className="chips">
@@ -130,7 +197,7 @@ export function KitchenScreen() {
                       ) : (
                         <div className="chips">
                           {items.map((it) => (
-                            <ItemChip key={it.id} item={it} onOpen={() => open(it.name)} />
+                            <ItemChip key={it.id} item={it} selected={sel(it.name)} onOpen={() => open(it.name)} />
                           ))}
                         </div>
                       )}
@@ -149,7 +216,7 @@ export function KitchenScreen() {
                 ) : (
                   <div className="chips">
                     {pantry.map((it) => (
-                      <ItemChip key={it.id} item={it} onOpen={() => open(it.name)} />
+                      <ItemChip key={it.id} item={it} selected={sel(it.name)} onOpen={() => open(it.name)} />
                     ))}
                   </div>
                 )}
@@ -172,10 +239,12 @@ export function KitchenScreen() {
                     <button
                       key={it.id}
                       type="button"
-                      className="row"
+                      className={`row${selecting ? ' row--select' : ''}`}
+                      aria-pressed={sel(it.name)}
                       aria-label={`${it.name}, 남은 양 ${LEVEL_LABEL[it.level]}`}
                       onClick={() => open(it.name)}
                     >
+                      {selecting && <span className="select-dot" aria-hidden="true" />}
                       <span className="row-main">
                         {it.name}
                         <span className="row-sub">{PLACE_LABEL[it.place]}</span>
@@ -194,10 +263,48 @@ export function KitchenScreen() {
         </>
       )}
 
-      <Link to="/add" className="fab">
-        <PlusIcon />
-        재료 추가
-      </Link>
+      {selecting ? (
+        <div className="bottom-bar bottom-bar--above-tabs select-actions">
+          <button type="button" className="btn btn--soft" disabled={selected.size === 0} onClick={emptySelected}>
+            다 떨어졌어요
+          </button>
+          <button
+            type="button"
+            className="btn btn--danger"
+            disabled={selected.size === 0}
+            onClick={() => setConfirmRemove(true)}
+          >
+            {selected.size > 0 ? `${selected.size}개 빼기` : '빼기'}
+          </button>
+        </div>
+      ) : (
+        <Link to="/add" className="fab">
+          <PlusIcon />
+          재료 추가
+        </Link>
+      )}
+
+      {confirmRemove && (
+        <BottomSheet label="재료 빼기 확인" onClose={() => setConfirmRemove(false)}>
+          <h2 style={{ fontSize: 20 }}>
+            {allSelected ? '냉장고를 모두 비울까요?' : `재료 ${selected.size}개를 뺄까요?`}
+          </h2>
+          <p className="subtitle" style={{ margin: 0 }}>
+            냉장고에서 지우기만 하고 장바구니에는 담지 않아요. 다시 사야 하는 재료라면 "다 떨어졌어요"를 눌러 주세요.
+          </p>
+          <button type="button" className="btn btn--danger" onClick={removeSelected}>
+            {selected.size}개 빼기
+          </button>
+          <button
+            type="button"
+            className="btn"
+            style={{ background: 'transparent', color: 'var(--muted)', height: 44, fontSize: 15 }}
+            onClick={() => setConfirmRemove(false)}
+          >
+            취소
+          </button>
+        </BottomSheet>
+      )}
 
       {openItem && (
         <BottomSheet label="재료 상태" onClose={() => setOpenName(null)}>

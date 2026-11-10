@@ -10,6 +10,10 @@ export type KitchenAction =
   | { type: 'addItems'; items: CatalogItem[] }
   | { type: 'setLevel'; name: string; level: Level }
   | { type: 'removeItem'; name: string }
+  /** 내 주방 편집: 여러 재료를 한 번에 빼기 (장바구니에 담지 않음) */
+  | { type: 'removeItems'; names: string[] }
+  /** 내 주방 편집: 여러 재료를 한 번에 "다 떨어짐" → 장바구니로 */
+  | { type: 'emptyItems'; names: string[] }
   | { type: 'updateItem'; name: string; changes: Partial<Pick<FridgeItem, 'place' | 'category'>> }
   /** 언제까지 먹을지 직접 정하기 (0시 타임스탬프). null = 자동 계산으로 되돌리기 */
   | { type: 'setUseBy'; name: string; useBy: number | null }
@@ -75,6 +79,17 @@ export function kitchenReducer(state: KitchenState, action: KitchenAction): Kitc
           return { ...f, useBy: action.useBy }
         }),
       }
+
+    case 'removeItems': {
+      const names = new Set(action.names)
+      return { ...state, fridge: state.fridge.filter((f) => !names.has(f.name)) }
+    }
+
+    case 'emptyItems':
+      return action.names.reduce(
+        (s, name) => kitchenReducer(s, { type: 'setLevel', name, level: 0 }),
+        state,
+      )
 
     case 'removeItem':
       return { ...state, fridge: state.fridge.filter((f) => f.name !== action.name) }

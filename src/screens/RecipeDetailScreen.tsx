@@ -9,6 +9,7 @@ import { BottomSheet } from '../components/BottomSheet'
 import { LevelPicker } from '../components/level'
 import { BackIcon, CheckIcon, PlayIcon } from '../components/icons'
 import { blockedBy } from '../lib/diet'
+import { recipePhoto } from '../components/RecipeThumb'
 import { useDiet } from '../store/diet'
 
 export function RecipeDetailScreen() {
@@ -34,6 +35,7 @@ export function RecipeDetailScreen() {
   }
 
   const blocked = blockedBy(recipe, diet)
+  const photo = recipePhoto(recipe.id)
   const fridgeByName = new Map(state.fridge.map((f) => [normalize(f.name), f]))
   const ingredients = recipe.ingredients.map((ing) => {
     const item = fridgeByName.get(normalize(ing.name))
@@ -68,11 +70,11 @@ export function RecipeDetailScreen() {
 
   return (
     <main style={{ paddingBottom: 120, background: 'var(--surface)', minHeight: '100dvh' }}>
-      <div className="detail-hero">
+      <div className={`detail-hero${photo ? ' detail-hero--photo' : ''}`}>
+        {photo ? <img src={photo} alt={recipe.name} /> : <span aria-hidden="true">{recipe.name[0]}</span>}
         <Link to="/" className="icon-btn" aria-label="레시피 목록으로 돌아가기">
           <BackIcon />
         </Link>
-        <span aria-hidden="true">{recipe.name[0]}</span>
       </div>
 
       <div className="screen" style={{ paddingBottom: 0, gap: 24 }}>

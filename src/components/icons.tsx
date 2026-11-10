@@ -78,3 +78,20 @@ export const PlayIcon = ({ size = 20, ...p }: IconProps) => (
     <path d="M8 5v14l11-7z" />
   </svg>
 )
+
+export const GridIcon = ({ size = 20, ...p }: IconProps) => (
+  <svg {...base(size)} {...p}>
+    <rect x="4" y="4" width="7" height="7" rx="1.5" />
+    <rect x="13" y="4" width="7" height="7" rx="1.5" />
+    <rect x="4" y="13" width="7" height="7" rx="1.5" />
+    <rect x="13" y="13" width="7" height="7" rx="1.5" />
+  </svg>
+)
+
+export const ListIcon = ({ size = 20, ...p }: IconProps) => (
+  <svg {...base(size)} {...p}>
+    <rect x="4" y="5" width="4" height="4" rx="1" />
+    <rect x="4" y="15" width="4" height="4" rx="1" />
+    <path d="M11 7h9M11 17h9" />
+  </svg>
+)

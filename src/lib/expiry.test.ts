@@ -140,3 +140,26 @@ describe('recommend', () => {
     expect(canCook[0].recipe.id).toBe('양파볶음')
   })
 })
+
+describe('내 주방 편집 (여러 개 한 번에)', () => {
+  const start = kitchenReducer(EMPTY_KITCHEN, {
+    type: 'addItems',
+    items: [
+      { name: '양파', category: 'veg', place: 'veg' },
+      { name: '두부', category: 'protein', place: 'main' },
+      { name: '우유', category: 'drink', place: 'door' },
+    ],
+  })
+
+  it('빼기: 냉장고에서만 지우고 장바구니에는 담지 않는다', () => {
+    const s = kitchenReducer(start, { type: 'removeItems', names: ['양파', '두부'] })
+    expect(s.fridge.map((f) => f.name)).toEqual(['우유'])
+    expect(s.cart).toEqual([])
+  })
+
+  it('다 떨어졌어요: 잔량 0 + 장바구니에 자동으로 담는다', () => {
+    const s = kitchenReducer(start, { type: 'emptyItems', names: ['양파', '우유'] })
+    expect(s.fridge.filter((f) => f.level === 0).map((f) => f.name).sort()).toEqual(['양파', '우유'])
+    expect(s.cart.map((c) => c.name).sort()).toEqual(['양파', '우유'])
+  })
+})
