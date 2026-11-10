@@ -1,8 +1,9 @@
 import { useSyncExternalStore } from 'react'
 import { EMPTY_DIET, type DietProfile } from '../lib/diet'
+import { IS_DEMO } from '../lib/demo'
 
 /** 내 식단 설정. 냉장고와 따로 이 기기에만 저장한다 (건강 정보라 서버·분석으로 보내지 않음) */
-const KEY = 'cookable:diet:v1'
+const KEY = IS_DEMO ? 'cookable:diet:demo' : 'cookable:diet:v1'
 const listeners = new Set<() => void>()
 
 function read(): DietProfile {

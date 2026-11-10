@@ -1,12 +1,15 @@
 import { createContext, useContext, useEffect, useReducer, type Dispatch, type ReactNode } from 'react'
 import { EMPTY_KITCHEN, kitchenReducer, type KitchenAction, type KitchenState } from './kitchen'
+import { DEMO_FRESH, IS_DEMO, demoKitchen } from '../lib/demo'
 
-const STORAGE_KEY = 'cookable:kitchen:v1'
+// 체험 모드는 다른 칸에 저장해서 내 진짜 냉장고를 건드리지 않는다
+const STORAGE_KEY = IS_DEMO ? 'cookable:kitchen:demo' : 'cookable:kitchen:v1'
 
 function load(): KitchenState {
+  if (IS_DEMO && DEMO_FRESH) return demoKitchen()
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
-    if (!raw) return EMPTY_KITCHEN
+    if (!raw) return IS_DEMO ? demoKitchen() : EMPTY_KITCHEN
     const parsed = JSON.parse(raw) as KitchenState
     if (!Array.isArray(parsed.fridge) || !Array.isArray(parsed.cart)) return EMPTY_KITCHEN
     // 유통기한 기능 이전에 넣은 재료는 업데이트한 오늘 넣은 것으로 본다

@@ -1,4 +1,6 @@
 import type { Recipe, RecipeType } from '../types'
+import { IS_DEMO } from '../lib/demo'
+import { DEMO_PHOTO_IDS } from '../data/demoPhotos'
 
 /**
  * 레시피 사진. src/assets/recipes/<레시피 id>.webp 가 있으면 그 사진을,
@@ -16,7 +18,10 @@ const PHOTO_BY_ID: Record<string, string> = Object.fromEntries(
 )
 
 export function recipePhoto(id: string): string | undefined {
-  return PHOTO_BY_ID[id]
+  if (PHOTO_BY_ID[id]) return PHOTO_BY_ID[id]
+  // 체험 모드에서만 가짜 사진 (public/demo, scripts/demo-photos.ts)
+  if (IS_DEMO && DEMO_PHOTO_IDS.has(id)) return `${import.meta.env.BASE_URL}demo/${id}.webp`
+  return undefined
 }
 
 export const PHOTO_COUNT = Object.keys(PHOTO_BY_ID).length

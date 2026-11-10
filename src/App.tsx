@@ -11,6 +11,7 @@ import { RecipeDetailScreen } from './screens/RecipeDetailScreen'
 import { CartScreen } from './screens/CartScreen'
 import { SettingsScreen } from './screens/SettingsScreen'
 import { DietScreen } from './screens/DietScreen'
+import { IS_DEMO, exitDemo } from './lib/demo'
 
 /** 탭바는 메인 탭 화면에서만 보여준다. 첫 화면은 레시피(앱을 여는 이유) */
 const TAB_ROUTES = ['/', '/kitchen', '/cart']
@@ -23,6 +24,14 @@ function Shell() {
   }, [pathname])
   return (
     <div className="app">
+      {IS_DEMO && (
+        <div className="demo-banner" role="status">
+          <span>체험 모드 · 가짜 냉장고와 가짜 사진이에요</span>
+          <button type="button" onClick={exitDemo}>
+            나가기
+          </button>
+        </div>
+      )}
       <Routes>
         <Route path="/" element={<RecipesScreen />} />
         <Route path="/kitchen" element={<KitchenScreen />} />

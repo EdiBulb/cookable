@@ -119,6 +119,17 @@ export function SettingsScreen() {
             <span />
           </span>
         </button>
+        <a
+          className="row settings-row"
+          href={`${location.pathname}?demo=1#/`}
+          onClick={() => track('demo_open')}
+        >
+          <span className="row-main">
+            체험 모드로 둘러보기
+            <span className="row-sub">가짜 냉장고·가짜 사진으로 화면 확인 (내 냉장고는 그대로)</span>
+          </span>
+          <ChevronIcon style={{ color: 'var(--muted)' }} />
+        </a>
         <div className="row settings-row" style={{ cursor: 'default' }}>
           <span className="row-main">
             앱 정보

@@ -1,4 +1,5 @@
 import type { PostHog } from 'posthog-js'
+import { IS_DEMO } from './demo'
 
 /**
  * PostHog 행동 분석.
@@ -29,7 +30,8 @@ const queue: [string, Record<string, unknown> | undefined][] = []
 export function initAnalytics(): void {
   // 테스트·로컬 개발 중에는 기록하지 않음
   if (import.meta.env.DEV || import.meta.env.MODE === 'test') return
-  out = optedOut()
+  // 체험 모드(가짜 데이터)는 기록하지 않음
+  out = IS_DEMO || optedOut()
   if (out) return
   // 첫 화면을 빨리 띄우려고, PostHog는 페이지가 뜬 뒤에 따로 불러옴
   const load = () =>
