@@ -170,6 +170,7 @@ export function RecipesScreen() {
   const [view, setViewState] = useState<RecipeView>(readView)
   // 바로 만들 수 있는 요리가 많으면 몇 개만 먼저 보여 주고 "더보기" (아래 "하나만 더 사면 돼요"가 묻히지 않게)
   const [showAllCook, setShowAllCook] = useState(false)
+  const [showAllMore, setShowAllMore] = useState(false)
   const previewCount = view === 'tile' ? 6 : 5 // 타일은 3열이라 두 줄을 꽉 채우는 6개
   const setView = (v: RecipeView) => {
     setViewState(v)
@@ -211,7 +212,7 @@ export function RecipesScreen() {
   }, [q, results.length])
 
   return (
-    <main className="screen">
+    <main className="screen screen--with-fab">
       <header>
         <span className="eyebrow">Cookable</span>
         <h1 className="title">오늘 뭐 해 먹지?</h1>
@@ -371,7 +372,23 @@ export function RecipesScreen() {
                 <h2 className="section-title">하나만 더 사면 돼요</h2>
                 <span className="count">{oneMore.length}개</span>
               </div>
-              <RecipeResults items={oneMore.map((m) => ({ m }))} view={view} />
+              <RecipeResults
+                items={(showAllMore ? oneMore : oneMore.slice(0, previewCount)).map((m) => ({ m }))}
+                view={view}
+              />
+              {oneMore.length > previewCount && (
+                <button
+                  type="button"
+                  className="more-btn"
+                  aria-expanded={showAllMore}
+                  onClick={() => {
+                    setShowAllMore((v) => !v)
+                    track('recipe_more', { open: !showAllMore, total: oneMore.length, section: 'one_more' })
+                  }}
+                >
+                  {showAllMore ? '접기' : `더보기 (${oneMore.length - previewCount}개 더)`}
+                </button>
+              )}
             </section>
           )}
         </>

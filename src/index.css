@@ -380,3 +380,4 @@ a { color: var(--brand); }
 .toast span { flex: 1; }
 .toast button, .toast a { border: 0; background: transparent; padding: 0; color: #9fe1cb; font-size: 14px; font-weight: 700; text-decoration: none; white-space: nowrap; }
 .more-btn { height: 46px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); color: var(--ink); font-family: inherit; font-size: 14px; font-weight: 700; }
+.screen--with-fab { padding-bottom: calc(176px + env(safe-area-inset-bottom)); }
