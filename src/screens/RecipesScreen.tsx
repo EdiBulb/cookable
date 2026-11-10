@@ -249,9 +249,6 @@ export function RecipesScreen() {
             </div>
           ) : (
             <>
-              <p className="subtitle" style={{ margin: 0 }}>
-                내 냉장고 기준으로 부족한 재료를 보여드려요
-              </p>
               <RecipeResults items={results} view={view} />
             </>
           )}
@@ -291,9 +288,6 @@ export function RecipesScreen() {
                   </button>
                 ))}
               </div>
-              <p className="subtitle" style={{ margin: 0, fontSize: 12 }}>
-                누르면 그 재료로 만들 수 있는 요리를 찾아요 · 아래 추천도 이 재료를 쓰는 요리부터 보여 드려요
-              </p>
             </section>
           )}
           <div className="pills" role="group" aria-label="요리 종류">
@@ -335,14 +329,6 @@ export function RecipesScreen() {
               </button>
             ))}
           </div>
-          <p className="subtitle" style={{ margin: 0 }}>
-            레시피 {pool.length}개 중에서 냉장고 재료로 찾았어요 · 소금, 식용유, 설탕 같은 기본 양념은 빼고 계산해요
-          </p>
-          {!dietOn && (
-            <Link to="/diet" className="diet-link">
-              못 먹는 재료가 있나요? 내 식단 설정하기
-            </Link>
-          )}
           <section style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div className="section-head">
               <h2 className="section-title">지금 바로 만들 수 있어요</h2>
@@ -360,11 +346,9 @@ export function RecipesScreen() {
 
           {oneMore.length > 0 && (
             <section style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-              <div>
+              <div className="section-head">
                 <h2 className="section-title">하나만 더 사면 돼요</h2>
-                <p className="subtitle">
-                  {view === 'list' ? '부족한 재료를 바로 장바구니에 담을 수 있어요' : '누르면 부족한 재료를 확인하고 장바구니에 담을 수 있어요'}
-                </p>
+                <span className="count">{oneMore.length}개</span>
               </div>
               <RecipeResults items={oneMore.map((m) => ({ m }))} view={view} />
             </section>
