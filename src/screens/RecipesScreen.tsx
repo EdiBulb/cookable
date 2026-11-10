@@ -6,7 +6,7 @@ import { recommend, searchRecipes, type Match } from '../lib/recommend'
 import { useKitchen } from '../store/KitchenContext'
 import type { RecipeType } from '../types'
 import { ChevronIcon, GridIcon, ListIcon, SearchIcon } from '../components/icons'
-import { RecipeThumb } from '../components/RecipeThumb'
+import { RecipeThumb, recipePhoto } from '../components/RecipeThumb'
 import { dayLabel, urgencyOf, urgentItems } from '../lib/expiry'
 import { blockedBy, dietSummary, isDietActive, isLight, isMild } from '../lib/diet'
 import { useDiet } from '../store/diet'
@@ -86,6 +86,7 @@ function RecipeTile({ match, blocked = [] }: { match: Match; blocked?: string[] 
   const { recipe, missing, uses } = match
   const ready = missing.length === 0
   const isBlocked = blocked.length > 0
+  const hasPhoto = Boolean(recipePhoto(recipe.id))
   return (
     <Link
       to={`/recipes/${recipe.id}`}
@@ -99,8 +100,9 @@ function RecipeTile({ match, blocked = [] }: { match: Match; blocked?: string[] 
             {ready ? '바로 가능' : `${missing.length}개 부족`}
           </span>
         )}
+        {/* 사진이 있을 때만 이름을 사진 안 오른쪽 아래에 (사진이 없으면 타일 가운데에 이미 이름이 있음) */}
+        {hasPhoto && <span className="tile-overlay-name">{recipe.name}</span>}
       </span>
-      <span className="tile-name">{recipe.name}</span>
       {isBlocked ? (
         <span className="tile-sub tile-sub--blocked">식단에 안 맞음</span>
       ) : uses && uses.length > 0 ? (
