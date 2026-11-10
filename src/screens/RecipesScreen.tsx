@@ -10,6 +10,7 @@ import { RecipeThumb, recipePhoto } from '../components/RecipeThumb'
 import { dayLabel, urgencyOf, urgentItems } from '../lib/expiry'
 import { blockedBy, dietSummary, isDietActive, isLight, isMild } from '../lib/diet'
 import { useDiet } from '../store/diet'
+import { EmptyFridgeButton } from '../components/EmptyFridge'
 
 /** 레시피 카드 한 장: 부족한 재료가 있으면 바로 장바구니에 담을 수 있다 */
 function RecipeCard({ match, blocked = [] }: { match: Match; blocked?: string[] }) {
@@ -370,6 +371,8 @@ export function RecipesScreen() {
           )}
         </>
       )}
+
+      <EmptyFridgeButton />
     </main>
   )
 }

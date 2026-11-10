@@ -15,3 +15,14 @@ describe('체험 모드 가짜 데이터', () => {
     expect(k.fridge.some((f) => f.level === 0)).toBe(true)
   })
 })
+
+describe('냉장고 비우기', () => {
+  it('양념·건재료·냉동실은 남기고 금방 상하는 재료만 비운다', async () => {
+    const { isLongLasting } = await import('../components/EmptyFridge')
+    const kept = demoKitchen().fridge.filter(isLongLasting).map((f) => f.name)
+    expect(kept).toEqual(expect.arrayContaining(['간장', '고추장', '쌀', '냉동 만두']))
+    expect(kept).not.toContain('양상추')
+    expect(kept).not.toContain('두부')
+    expect(kept).not.toContain('식빵')
+  })
+})
