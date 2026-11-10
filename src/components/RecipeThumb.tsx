@@ -35,9 +35,12 @@ const TYPE_TONE: Record<RecipeType, [string, string]> = {
 export function RecipeThumb({
   recipe,
   className = 'recipe-thumb',
+  fullName = false,
 }: {
   recipe: Pick<Recipe, 'id' | 'name' | 'type'>
   className?: string
+  /** 사진이 없을 때 첫 글자 대신 이름 전체를 보여 줄지 (타일·상세처럼 넓은 곳) */
+  fullName?: boolean
 }) {
   const url = recipePhoto(recipe.id)
   const [bg, fg] = TYPE_TONE[recipe.type]
@@ -49,8 +52,12 @@ export function RecipeThumb({
     )
   }
   return (
-    <span className={className} aria-hidden="true" style={{ background: bg, color: fg }}>
-      {recipe.name[0]}
+    <span
+      className={`${className}${fullName ? ' thumb-name' : ''}`}
+      aria-hidden="true"
+      style={{ background: bg, color: fg }}
+    >
+      {fullName ? recipe.name : recipe.name[0]}
     </span>
   )
 }

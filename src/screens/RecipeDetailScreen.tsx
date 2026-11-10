@@ -71,7 +71,7 @@ export function RecipeDetailScreen() {
   return (
     <main style={{ paddingBottom: 120, background: 'var(--surface)', minHeight: '100dvh' }}>
       <div className={`detail-hero${photo ? ' detail-hero--photo' : ''}`}>
-        {photo ? <img src={photo} alt={recipe.name} /> : <span aria-hidden="true">{recipe.name[0]}</span>}
+        {photo ? <img src={photo} alt={recipe.name} /> : <span aria-hidden="true" className="detail-hero-name">{recipe.name}</span>}
         <Link to="/" className="icon-btn" aria-label="레시피 목록으로 돌아가기">
           <BackIcon />
         </Link>

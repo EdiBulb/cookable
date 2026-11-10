@@ -93,7 +93,7 @@ function RecipeTile({ match, blocked = [] }: { match: Match; blocked?: string[] 
       aria-label={`${recipe.name}, ${isBlocked ? '내 식단에 맞지 않아요' : ready ? '바로 만들 수 있어요' : `재료 ${missing.length}개 부족`}`}
     >
       <span className="tile-photo-wrap">
-        <RecipeThumb recipe={recipe} className="tile-photo" />
+        <RecipeThumb recipe={recipe} className="tile-photo" fullName />
         {!isBlocked && (
           <span className="tile-badge" data-ready={ready}>
             {ready ? '바로 가능' : `${missing.length}개 부족`}
