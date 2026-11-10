@@ -5,16 +5,19 @@ import { RECIPES } from '../data/recipes'
 import { recommend, searchRecipes, type Match } from '../lib/recommend'
 import { useKitchen } from '../store/KitchenContext'
 import type { RecipeType } from '../types'
-import { SearchIcon } from '../components/icons'
+import { ChevronIcon, SearchIcon } from '../components/icons'
 import { dayLabel, urgencyOf, urgentItems } from '../lib/expiry'
+import { blockedBy, dietSummary, isDietActive, isLight, isMild } from '../lib/diet'
+import { useDiet } from '../store/diet'
 
 /** 레시피 카드 한 장: 부족한 재료가 있으면 바로 장바구니에 담을 수 있다 */
-function RecipeCard({ match }: { match: Match }) {
+function RecipeCard({ match, blocked = [] }: { match: Match; blocked?: string[] }) {
   const { state, dispatch } = useKitchen()
   const { recipe, needed, missing, uses } = match
   const inCart = new Set(state.cart.filter((c) => !c.done).map((c) => c.name))
   const toBuy = missing.filter((m) => !inCart.has(m))
   const ready = missing.length === 0
+  const isBlocked = blocked.length > 0
 
   const addAll = () => {
     for (const name of toBuy) {
@@ -24,7 +27,10 @@ function RecipeCard({ match }: { match: Match }) {
   }
 
   return (
-    <div className="recipe-card" style={{ flexDirection: 'column', alignItems: 'stretch', gap: 0 }}>
+    <div
+      className={`recipe-card${isBlocked ? ' recipe-card--blocked' : ''}`}
+      style={{ flexDirection: 'column', alignItems: 'stretch', gap: 0 }}
+    >
       <Link
         to={`/recipes/${recipe.id}`}
         style={{ display: 'flex', gap: 14, alignItems: 'center', textDecoration: 'none', color: 'inherit' }}
@@ -44,6 +50,7 @@ function RecipeCard({ match }: { match: Match }) {
               없는 재료: <b style={{ color: '#b4531a' }}>{missing.join(', ')}</b>
             </p>
           )}
+          {isBlocked && <p className="recipe-blocked">내 식단에 맞지 않아요 · {blocked.join(', ')}</p>}
           {uses && uses.length > 0 && (
             <p className="recipe-rescue">
               {uses.map((u) => `${u.name} ${dayLabel(u.days)}`).join(' · ')} 사용
@@ -54,7 +61,7 @@ function RecipeCard({ match }: { match: Match }) {
           {needed.length - missing.length}/{needed.length}
         </span>
       </Link>
-      {!ready && (
+      {!ready && !isBlocked && (
         <div className="missing-row" style={{ justifyContent: 'flex-end' }}>
           <button
             type="button"
@@ -81,10 +88,20 @@ export function RecipesScreen() {
   const { state } = useKitchen()
   const [query, setQuery] = useState('')
   const [type, setType] = useState<RecipeType | 'all'>('all')
+  const [light, setLight] = useState(false)
+  const [mild, setMild] = useState(false)
+  const diet = useDiet()
+  const dietOn = isDietActive(diet)
   const q = query.trim()
-  const pool = type === 'all' ? RECIPES : RECIPES.filter((r) => r.type === type)
+  // 내 식단(알러지·베지테리안·싫어하는 재료)은 늘, 가벼운/안 매운 메뉴는 켰을 때만
+  const allowed = RECIPES.filter((r) => blockedBy(r, diet).length === 0)
+  const pool = allowed.filter(
+    (r) => (type === 'all' || r.type === type) && (!light || isLight(r)) && (!mild || isMild(r)),
+  )
   const { canCook, oneMore } = recommend(pool, state.fridge)
-  const results = searchRecipes(RECIPES, state.fridge, q)
+  // 검색은 숨기지 않고, 식단에 안 맞는 건 이유와 함께 맨 아래로
+  const found = searchRecipes(RECIPES, state.fridge, q).map((m) => ({ m, blocked: blockedBy(m.recipe, diet) }))
+  const results = [...found.filter((x) => x.blocked.length === 0), ...found.filter((x) => x.blocked.length > 0)]
   const emptyFridge = state.fridge.length === 0
   // 지난 재료는 추천하지 않고, 오늘~3일 안에 먹을 재료만
   const eatFirst = urgentItems(state.fridge).filter((u) => u.days >= 0)
@@ -121,6 +138,13 @@ export function RecipesScreen() {
         />
       </label>
 
+      {dietOn && (
+        <Link to="/diet" className="diet-on">
+          <span>내 식단 적용 중 · {dietSummary(diet)}</span>
+          <ChevronIcon style={{ flex: 'none' }} />
+        </Link>
+      )}
+
       {q ? (
         <section style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <div className="section-head">
@@ -140,8 +164,8 @@ export function RecipesScreen() {
               <p className="subtitle" style={{ margin: 0 }}>
                 내 냉장고 기준으로 부족한 재료를 보여드려요
               </p>
-              {results.map((m) => (
-                <RecipeCard key={m.recipe.id} match={m} />
+              {results.map(({ m, blocked }) => (
+                <RecipeCard key={m.recipe.id} match={m} blocked={blocked} />
               ))}
             </>
           )}
@@ -187,6 +211,29 @@ export function RecipesScreen() {
             </section>
           )}
           <div className="pills" role="group" aria-label="요리 종류">
+            <button
+              type="button"
+              className="pill"
+              aria-pressed={light}
+              onClick={() => {
+                setLight((v) => !v)
+                track('recipe_filter', { type: 'light', on: !light })
+              }}
+            >
+              가벼운 메뉴
+            </button>
+            <button
+              type="button"
+              className="pill"
+              aria-pressed={mild}
+              onClick={() => {
+                setMild((v) => !v)
+                track('recipe_filter', { type: 'mild', on: !mild })
+              }}
+            >
+              안 매운 메뉴
+            </button>
+            <span className="pill-sep" aria-hidden="true" />
             {(['all', ...TYPES] as const).map((t) => (
               <button
                 key={t}
@@ -203,8 +250,13 @@ export function RecipesScreen() {
             ))}
           </div>
           <p className="subtitle" style={{ margin: 0 }}>
-            레시피 {RECIPES.length}개 중에서 냉장고 재료로 찾았어요 · 소금, 식용유, 설탕 같은 기본 양념은 빼고 계산해요
+            레시피 {pool.length}개 중에서 냉장고 재료로 찾았어요 · 소금, 식용유, 설탕 같은 기본 양념은 빼고 계산해요
           </p>
+          {!dietOn && (
+            <Link to="/diet" className="diet-link">
+              못 먹는 재료가 있나요? 내 식단 설정하기
+            </Link>
+          )}
           <section style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div className="section-head">
               <h2 className="section-title">지금 바로 만들 수 있어요</h2>

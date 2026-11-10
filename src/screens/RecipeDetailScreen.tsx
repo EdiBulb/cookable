@@ -8,6 +8,8 @@ import { useKitchen } from '../store/KitchenContext'
 import { BottomSheet } from '../components/BottomSheet'
 import { LevelPicker } from '../components/level'
 import { BackIcon, CheckIcon, PlayIcon } from '../components/icons'
+import { blockedBy } from '../lib/diet'
+import { useDiet } from '../store/diet'
 
 export function RecipeDetailScreen() {
   const { id = '' } = useParams()
@@ -16,6 +18,7 @@ export function RecipeDetailScreen() {
   const [sheetOpen, setSheetOpen] = useState(false)
   const [draft, setDraft] = useState<Record<string, Level>>({})
   const [saved, setSaved] = useState(false)
+  const diet = useDiet()
 
   useEffect(() => {
     if (recipe) track('recipe_view', { recipe: recipe.name, type: recipe.type })
@@ -30,6 +33,7 @@ export function RecipeDetailScreen() {
     )
   }
 
+  const blocked = blockedBy(recipe, diet)
   const fridgeByName = new Map(state.fridge.map((f) => [normalize(f.name), f]))
   const ingredients = recipe.ingredients.map((ing) => {
     const item = fridgeByName.get(normalize(ing.name))
@@ -80,6 +84,14 @@ export function RecipeDetailScreen() {
             {recipe.type} · {recipe.minutes}분 · {recipe.difficulty} · {recipe.servings}인분
           </p>
         </div>
+
+        {blocked.length > 0 && (
+          <Link to="/diet" className="note-warn" style={{ textDecoration: 'none', display: 'block' }}>
+            내 식단에 맞지 않아요 · {blocked.join(', ')}
+            <br />
+            <span style={{ fontSize: 12, fontWeight: 500 }}>제품마다 성분이 다를 수 있으니 성분표를 확인하세요</span>
+          </Link>
+        )}
 
         <section style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           <div className="section-head">

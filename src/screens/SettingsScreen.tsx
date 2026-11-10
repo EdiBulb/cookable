@@ -9,6 +9,8 @@ import { BackIcon, ChevronIcon } from '../components/icons'
 import { getInstallState, promptInstall, subscribeInstall, type InstallState } from '../lib/install'
 import { isIntroOff, setIntroOff } from '../components/Splash'
 import { track } from '../lib/analytics'
+import { useDiet } from '../store/diet'
+import { dietSummary, isDietActive } from '../lib/diet'
 
 const FEEDBACK_EMAIL = 'hello@abracadelulu.com'
 
@@ -19,6 +21,7 @@ export function SettingsScreen() {
   const [guide, setGuide] = useState<'ios' | 'manual' | null>(null)
   const [introOff, setIntro] = useState(() => isIntroOff())
   const [confirmReset, setConfirmReset] = useState(false)
+  const diet = useDiet()
 
   useEffect(() => subscribeInstall(() => setInstall(getInstallState())), [])
 
@@ -87,6 +90,15 @@ export function SettingsScreen() {
       </section>
 
       <section className="card">
+        <Link className="row settings-row" to="/diet">
+          <span className="row-main">
+            내 식단
+            <span className="row-sub">
+              {isDietActive(diet) ? dietSummary(diet) : '못 먹는 재료, 베지테리안, 싫어하는 재료'}
+            </span>
+          </span>
+          <ChevronIcon style={{ color: 'var(--muted)' }} />
+        </Link>
         <a
           className="row settings-row"
           href={`mailto:${FEEDBACK_EMAIL}?subject=${encodeURIComponent('Cookable 의견')}`}
