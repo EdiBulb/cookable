@@ -168,6 +168,9 @@ export function RecipesScreen() {
   const [light, setLight] = useState(false)
   const [mild, setMild] = useState(false)
   const [view, setViewState] = useState<RecipeView>(readView)
+  // 바로 만들 수 있는 요리가 많으면 몇 개만 먼저 보여 주고 "더보기" (아래 "하나만 더 사면 돼요"가 묻히지 않게)
+  const [showAllCook, setShowAllCook] = useState(false)
+  const previewCount = view === 'tile' ? 6 : 5 // 타일은 3열이라 두 줄을 꽉 채우는 6개
   const setView = (v: RecipeView) => {
     setViewState(v)
     try {
@@ -340,7 +343,25 @@ export function RecipesScreen() {
                 <p>아직 재료가 다 갖춰진 요리가 없어요. 아래에서 하나만 더 사면 되는 요리를 확인해 보세요.</p>
               </div>
             ) : (
-              <RecipeResults items={canCook.map((m) => ({ m }))} view={view} />
+              <>
+                <RecipeResults
+                  items={(showAllCook ? canCook : canCook.slice(0, previewCount)).map((m) => ({ m }))}
+                  view={view}
+                />
+                {canCook.length > previewCount && (
+                  <button
+                    type="button"
+                    className="more-btn"
+                    aria-expanded={showAllCook}
+                    onClick={() => {
+                      setShowAllCook((v) => !v)
+                      track('recipe_more', { open: !showAllCook, total: canCook.length })
+                    }}
+                  >
+                    {showAllCook ? '접기' : `더보기 (${canCook.length - previewCount}개 더)`}
+                  </button>
+                )}
+              </>
             )}
           </section>
 
