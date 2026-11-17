@@ -128,3 +128,26 @@ export function shelfDaysFor(name: string, place: Place): number | null {
 export function findCatalog(name: string): CatalogItem | undefined {
   return CATALOG.find((item) => item.name === name)
 }
+
+/**
+ * 재료 목록에서 이름으로 찾기 (장바구니 직접 추가 자동완성 등).
+ * 정확히 같음 → 앞부분 일치 → 포함 순, 띄어쓰기는 무시. 별칭(달걀 → 계란)도 찾는다.
+ */
+export function searchCatalog(query: string, limit = 6, aliasOf?: (q: string) => string): CatalogItem[] {
+  const q = query.replace(/\s/g, '')
+  if (!q) return []
+  const key = (s: string) => s.replace(/\s/g, '')
+  const rank = (c: CatalogItem) => {
+    const n = key(c.name)
+    if (n === q) return 0
+    if (n.startsWith(q)) return 1
+    return 2
+  }
+  const hits = CATALOG.filter((c) => key(c.name).includes(q))
+  const alias = aliasOf?.(query.trim())
+  const viaAlias = alias && alias !== query.trim() ? CATALOG.filter((c) => c.name === alias) : []
+  const seen = new Set<string>()
+  return [...viaAlias, ...hits.sort((a, b) => rank(a) - rank(b) || a.name.length - b.name.length)]
+    .filter((c) => (seen.has(c.name) ? false : (seen.add(c.name), true)))
+    .slice(0, limit)
+}

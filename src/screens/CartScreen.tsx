@@ -4,6 +4,8 @@ import { track } from '../lib/analytics'
 import type { CartItem } from '../types'
 import { useKitchen } from '../store/KitchenContext'
 import { CheckIcon, CloseIcon, PlusIcon } from '../components/icons'
+import { searchCatalog } from '../data/catalog'
+import { normalize } from '../lib/recommend'
 
 const SECTION_TITLE: Record<CartItem['source'], string> = {
   auto: '다 떨어져서 자동으로 담겼어요',
@@ -16,13 +18,22 @@ export function CartScreen() {
   const navigate = useNavigate()
   const [draft, setDraft] = useState('')
 
+  // 재료 목록에 있는 재료면 그 이름으로 담아야, 장보기 끝낼 때 냉장고 제자리(칸·종류)로 들어간다
+  const suggestions = searchCatalog(draft, 6, normalize)
+
+  const add = (name: string, fromList: boolean) => {
+    dispatch({ type: 'addToCart', name, source: 'manual' })
+    track('cart_add', { source: 'manual', from_catalog: fromList })
+    setDraft('')
+  }
+
   const addManual = (e: FormEvent) => {
     e.preventDefault()
     const name = draft.trim()
     if (!name) return
-    dispatch({ type: 'addToCart', name, source: 'manual' })
-    track('cart_add', { source: 'manual' })
-    setDraft('')
+    // 엔터를 누르면: 목록에 똑같은 이름(또는 별칭)이 있으면 그걸로
+    const exact = suggestions.find((c) => c.name.replace(/\s/g, '') === name.replace(/\s/g, '') || c.name === normalize(name))
+    add(exact ? exact.name : name, Boolean(exact))
   }
 
   const inCart = new Set(state.cart.map((c) => c.name))
@@ -57,7 +68,8 @@ export function CartScreen() {
         </label>
         <input
           id="cart-add"
-          placeholder="직접 추가 (예: 휴지, 두유)"
+          placeholder="재료나 물건 이름 (예: 토마토, 휴지)"
+          autoComplete="off"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           enterKeyHint="done"
@@ -71,6 +83,34 @@ export function CartScreen() {
           <PlusIcon />
         </button>
       </form>
+
+      {draft.trim() && (
+        <div className="suggest" role="listbox" aria-label="재료 목록에서 고르기">
+          {suggestions.map((c) => {
+            const already = inCart.has(c.name)
+            return (
+              <button
+                key={c.name}
+                type="button"
+                role="option"
+                aria-selected={false}
+                className="suggest-row"
+                disabled={already}
+                onClick={() => add(c.name, true)}
+              >
+                <span>{c.name}</span>
+                <span className="row-sub">{already ? '이미 담았어요' : '담기'}</span>
+              </button>
+            )
+          })}
+          {!suggestions.some((c) => c.name === draft.trim() || c.name === normalize(draft)) && (
+            <button type="button" role="option" aria-selected={false} className="suggest-row" onClick={() => add(draft.trim(), false)}>
+              <span>"{draft.trim()}" 그대로 추가</span>
+              <span className="row-sub">목록에 없는 물건</span>
+            </button>
+          )}
+        </div>
+      )}
 
       {state.cart.length === 0 && (
         <div className="empty-state">

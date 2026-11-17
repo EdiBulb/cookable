@@ -381,3 +381,11 @@ a { color: var(--brand); }
 .toast button, .toast a { border: 0; background: transparent; padding: 0; color: #9fe1cb; font-size: 14px; font-weight: 700; text-decoration: none; white-space: nowrap; }
 .more-btn { height: 46px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); color: var(--ink); font-family: inherit; font-size: 14px; font-weight: 700; }
 .screen--with-fab { padding-bottom: calc(176px + env(safe-area-inset-bottom)); }
+
+/* 장바구니 직접 추가 자동완성 */
+.suggest { margin-top: -8px; display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); overflow: hidden; }
+.suggest-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 48px; padding: 0 16px; border: 0; border-bottom: 1px solid var(--line); background: transparent; font-family: inherit; font-size: 15px; font-weight: 500; color: var(--ink); text-align: left; }
+.suggest-row:last-child { border-bottom: 0; }
+.suggest-row .row-sub { flex: none; color: var(--brand); font-weight: 700; }
+.suggest-row:disabled { color: var(--muted); }
+.suggest-row:disabled .row-sub { color: var(--muted); }
