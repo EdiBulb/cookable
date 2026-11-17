@@ -1,6 +1,7 @@
 import type { Recipe } from '../types'
 import { MORE_RECIPES } from './recipesMore'
 import { MORE_RECIPES_2 } from './recipesMore2'
+import { MORE_RECIPES_3 } from './recipesMore3'
 
 /**
  * MVP용 기본 레시피.
@@ -363,7 +364,7 @@ const BASE_RECIPES: Recipe[] = [
   },
 ]
 
-export const RECIPES: Recipe[] = [...BASE_RECIPES, ...MORE_RECIPES, ...MORE_RECIPES_2]
+export const RECIPES: Recipe[] = [...BASE_RECIPES, ...MORE_RECIPES, ...MORE_RECIPES_2, ...MORE_RECIPES_3]
 
 export function findRecipe(id: string): Recipe | undefined {
   return RECIPES.find((r) => r.id === id)

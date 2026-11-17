@@ -50,7 +50,7 @@ describe('daysLeft', () => {
   })
 
   it('목록에 없는 재료는 칸으로 짐작한다', () => {
-    expect(daysLeft(item('고수', 0), NOW)).toBe(7)
+    expect(daysLeft(item('셀러리', 0), NOW)).toBe(7)
     expect(daysLeft(item('비밀 소스', 0, { place: 'pantry' }), NOW)).toBeNull()
   })
 })
