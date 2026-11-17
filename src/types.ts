@@ -56,4 +56,22 @@ export interface Recipe {
   /** 표준 재료 이름 + 분량 */
   ingredients: { name: string; amount: string }[]
   steps: string[]
+  /** 나만의 레시피로 고친 경우: 원래 이름 (가벼운 메뉴 등 기본 레시피 기준 판단용) */
+  baseName?: string
+  /** 나만의 레시피로 고친 경우 true */
+  custom?: boolean
+}
+
+/** 나만의 레시피: 기본 레시피와 다른 부분만 저장 → 기본 레시피를 고쳐도 같이 반영됨 */
+export interface RecipeOverride {
+  baseId: string
+  /** 비우면 기본 이름 */
+  name?: string
+  /** 뺀 재료 (기본 레시피의 재료 이름) */
+  remove: string[]
+  /** 추가한 재료 */
+  add: { name: string; amount: string }[]
+  /** 참고한 영상 링크나 메모 */
+  note?: string
+  updatedAt: number
 }

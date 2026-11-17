@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react'
 import { track } from '../lib/analytics'
 import { Link } from 'react-router-dom'
-import { RECIPES } from '../data/recipes'
+import { useRecipes } from '../store/custom'
+import { PencilIcon } from '../components/icons'
 import { recommend, searchRecipes, type Match } from '../lib/recommend'
 import { useKitchen } from '../store/KitchenContext'
 import type { RecipeType } from '../types'
@@ -39,7 +40,10 @@ function RecipeCard({ match, blocked = [] }: { match: Match; blocked?: string[] 
       >
         <RecipeThumb recipe={recipe} />
         <span style={{ flex: 1, minWidth: 0 }}>
-          <h3>{recipe.name}</h3>
+          <h3>
+            {recipe.name}
+            {recipe.custom && <span className="mine-tag">내 레시피</span>}
+          </h3>
           <p className="recipe-meta">
             {recipe.type} · {recipe.minutes}분 · {recipe.difficulty}
           </p>
@@ -91,14 +95,19 @@ function RecipeTile({ match, blocked = [] }: { match: Match; blocked?: string[] 
   return (
     <Link
       to={`/recipes/${recipe.id}`}
-      className={`recipe-tile${isBlocked ? ' recipe-card--blocked' : ''}`}
-      aria-label={`${recipe.name}, ${isBlocked ? '내 식단에 맞지 않아요' : ready ? '바로 만들 수 있어요' : `재료 ${missing.length}개 부족`}`}
+      className={`recipe-tile${isBlocked ? ' recipe-card--blocked' : ''}${recipe.custom ? ' recipe-tile--mine' : ''}`}
+      aria-label={`${recipe.name}${recipe.custom ? ', 내 레시피' : ''}, ${isBlocked ? '내 식단에 맞지 않아요' : ready ? '바로 만들 수 있어요' : `재료 ${missing.length}개 부족`}`}
     >
       <span className="tile-photo-wrap">
         <RecipeThumb recipe={recipe} className="tile-photo" fullName />
         {!isBlocked && (
           <span className="tile-badge" data-ready={ready}>
             {ready ? '바로 가능' : `${missing.length}개 부족`}
+          </span>
+        )}
+        {recipe.custom && (
+          <span className="tile-mine" aria-hidden="true">
+            <PencilIcon size={12} />
           </span>
         )}
         {/* 사진이 있을 때만 이름을 사진 안 오른쪽 아래에 (사진이 없으면 타일 가운데에 이미 이름이 있음) */}
@@ -167,6 +176,7 @@ export function RecipesScreen() {
   const [type, setType] = useState<RecipeType | 'all'>('all')
   const [light, setLight] = useState(false)
   const [mild, setMild] = useState(false)
+  const [mineOnly, setMineOnly] = useState(false)
   const [view, setViewState] = useState<RecipeView>(readView)
   // 바로 만들 수 있는 요리가 많으면 몇 개만 먼저 보여 주고 "더보기" (아래 "하나만 더 사면 돼요"가 묻히지 않게)
   const [showAllCook, setShowAllCook] = useState(false)
@@ -185,13 +195,19 @@ export function RecipesScreen() {
   const dietOn = isDietActive(diet)
   const q = query.trim()
   // 내 식단(알러지·베지테리안·싫어하는 재료)은 늘, 가벼운/안 매운 메뉴는 켰을 때만
-  const allowed = RECIPES.filter((r) => blockedBy(r, diet).length === 0)
+  const recipes = useRecipes()
+  const mineCount = recipes.filter((r) => r.custom).length
+  const allowed = recipes.filter((r) => blockedBy(r, diet).length === 0)
   const pool = allowed.filter(
-    (r) => (type === 'all' || r.type === type) && (!light || isLight(r)) && (!mild || isMild(r)),
+    (r) =>
+      (type === 'all' || r.type === type) &&
+      (!light || isLight(r)) &&
+      (!mild || isMild(r)) &&
+      (!mineOnly || r.custom),
   )
   const { canCook, oneMore } = recommend(pool, state.fridge)
   // 검색은 숨기지 않고, 식단에 안 맞는 건 이유와 함께 맨 아래로
-  const found = searchRecipes(RECIPES, state.fridge, q).map((m) => ({ m, blocked: blockedBy(m.recipe, diet) }))
+  const found = searchRecipes(recipes, state.fridge, q).map((m) => ({ m, blocked: blockedBy(m.recipe, diet) }))
   const results = [...found.filter((x) => x.blocked.length === 0), ...found.filter((x) => x.blocked.length > 0)]
   const emptyFridge = state.fridge.length === 0
   // 지난 재료는 추천하지 않고, 오늘~3일 안에 먹을 재료만
@@ -317,6 +333,19 @@ export function RecipesScreen() {
             >
               안 매운 메뉴
             </button>
+            {mineCount > 0 && (
+              <button
+                type="button"
+                className="pill pill--mine"
+                aria-pressed={mineOnly}
+                onClick={() => {
+                  setMineOnly((v) => !v)
+                  track('recipe_filter', { type: 'mine', on: !mineOnly })
+                }}
+              >
+                <PencilIcon size={14} />내 레시피 {mineCount}
+              </button>
+            )}
             <span className="pill-sep" aria-hidden="true" />
             {(['all', ...TYPES] as const).map((t) => (
               <button

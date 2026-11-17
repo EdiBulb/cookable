@@ -95,3 +95,17 @@ export const ListIcon = ({ size = 20, ...p }: IconProps) => (
     <path d="M11 7h9M11 17h9" />
   </svg>
 )
+
+export const PencilIcon = ({ size = 20, ...p }: IconProps) => (
+  <svg {...base(size)} {...p}>
+    <path d="M12 20h9" />
+    <path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z" />
+  </svg>
+)
+
+export const MinusCircleIcon = ({ size = 20, ...p }: IconProps) => (
+  <svg {...base(size)} {...p}>
+    <circle cx="12" cy="12" r="9" />
+    <path d="M8 12h8" />
+  </svg>
+)

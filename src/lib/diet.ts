@@ -69,7 +69,7 @@ export function isMild(recipe: Recipe): boolean {
 }
 
 export function isLight(recipe: Recipe): boolean {
-  return LIGHT_RECIPES.has(recipe.name)
+  return LIGHT_RECIPES.has(recipe.baseName ?? recipe.name)
 }
 
 /** 레시피 홈 "내 식단 적용 중" 한 줄 요약 */

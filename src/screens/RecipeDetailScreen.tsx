@@ -7,14 +7,21 @@ import { STAPLES, normalize } from '../lib/recommend'
 import { useKitchen } from '../store/KitchenContext'
 import { BottomSheet } from '../components/BottomSheet'
 import { LevelPicker } from '../components/level'
-import { BackIcon, CheckIcon, PlayIcon } from '../components/icons'
+import { BackIcon, CheckIcon, PencilIcon, PlayIcon } from '../components/icons'
+import { useOverrides, useRecipes } from '../store/custom'
+import { isUrl } from '../lib/custom'
 import { blockedBy } from '../lib/diet'
 import { recipePhoto } from '../components/RecipeThumb'
 import { useDiet } from '../store/diet'
 
 export function RecipeDetailScreen() {
   const { id = '' } = useParams()
-  const recipe = findRecipe(id)
+  const base = findRecipe(id)
+  const mine = useRecipes().find((r) => r.id === id)
+  const override = useOverrides()[id]
+  // 나만의 레시피가 있으면 기본은 "내 방식", 원래 레시피도 전환해서 볼 수 있게
+  const [showBase, setShowBase] = useState(false)
+  const recipe = mine?.custom && !showBase ? mine : base
   const { state, dispatch } = useKitchen()
   const [sheetOpen, setSheetOpen] = useState(false)
   const [draft, setDraft] = useState<Record<string, Level>>({})
@@ -75,6 +82,11 @@ export function RecipeDetailScreen() {
         <Link to="/" className="icon-btn" aria-label="레시피 목록으로 돌아가기">
           <BackIcon />
         </Link>
+        {mine?.custom && (
+          <span className="hero-mine">
+            <PencilIcon size={14} />내 레시피
+          </span>
+        )}
       </div>
 
       <div className="screen" style={{ paddingBottom: 0, gap: 24 }}>
@@ -87,6 +99,24 @@ export function RecipeDetailScreen() {
           </p>
         </div>
 
+        {mine?.custom && (
+          <div className="seg" role="group" aria-label="레시피 보기">
+            <button type="button" aria-pressed={!showBase} onClick={() => setShowBase(false)}>
+              내 방식
+            </button>
+            <button
+              type="button"
+              aria-pressed={showBase}
+              onClick={() => {
+                setShowBase(true)
+                track('custom_view_base', { recipe: base?.name })
+              }}
+            >
+              기본 레시피
+            </button>
+          </div>
+        )}
+
         {blocked.length > 0 && (
           <Link to="/diet" className="note-warn" style={{ textDecoration: 'none', display: 'block' }}>
             내 식단에 맞지 않아요 · {blocked.join(', ')}
@@ -96,13 +126,17 @@ export function RecipeDetailScreen() {
         )}
 
         <section style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
-          <div className="section-head">
+          <div className="section-head" style={{ alignItems: 'center', gap: 8, justifyContent: 'flex-start' }}>
             <h2 className="section-title" style={{ fontSize: 17 }}>
               재료
             </h2>
             <span className="count" style={{ color: missingCount ? '#b4531a' : 'var(--good)', fontWeight: 700 }}>
               {missingCount ? `${missingCount}개 부족해요` : '모두 있어요'}
             </span>
+            <Link to={`/recipes/${id}/edit`} className="custom-entry" style={{ marginLeft: 'auto' }}>
+              <PencilIcon size={16} />
+              {mine?.custom ? '다시 고치기' : '내 방식으로 고치기'}
+            </Link>
           </div>
           <div className="card">
             {ingredients.map((ing) => (
@@ -116,6 +150,9 @@ export function RecipeDetailScreen() {
                 )}
                 <span>
                   {ing.name}
+                  {recipe.custom && !base?.ingredients.some((b) => b.name === ing.name) && (
+                    <span className="added-tag">내가 추가</span>
+                  )}
                   {!ing.has && (
                     <span className="row-sub" style={{ display: 'inline', marginLeft: 6, color: ing.staple ? 'var(--muted)' : '#b4531a' }}>
                       {ing.staple ? '기본 양념' : '없음'}
@@ -158,6 +195,42 @@ export function RecipeDetailScreen() {
             </button>
           )}
         </section>
+
+        {recipe.custom && override && override.remove.length > 0 && (
+          <p className="subtitle" style={{ margin: '-12px 0 0', fontSize: 13 }}>
+            뺀 재료: {override.remove.join(', ')} · 없어도 "바로 가능"으로 추천해요
+          </p>
+        )}
+        {showBase && mine?.custom && (
+          <p className="subtitle" style={{ margin: '-12px 0 0', fontSize: 13 }}>
+            Cookable 기본 레시피예요. 추천은 내 방식으로 계산해요.
+          </p>
+        )}
+        {!mine?.custom && (
+          <div className="custom-hint">
+            <PencilIcon size={18} style={{ color: 'var(--brand)', flex: 'none' }} />
+            <span>영상이랑 재료가 다르면? 내 방식으로 고쳐 두면 다음부터 그 기준으로 추천해요</span>
+          </div>
+        )}
+        {mine?.custom && override?.note?.trim() &&
+          (isUrl(override.note) ? (
+            <a href={override.note.trim()} target="_blank" rel="noreferrer" className="note-card">
+              <span style={{ width: 36, height: 36, borderRadius: 18, background: 'var(--ink)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>
+                <PlayIcon size={16} />
+              </span>
+              <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                <b style={{ fontSize: 14 }}>내가 참고한 영상</b>
+                <span className="row-sub">{override.note.trim()}</span>
+              </span>
+            </a>
+          ) : (
+            <div className="note-card">
+              <span style={{ display: 'flex', flexDirection: 'column', minWidth: 0 }}>
+                <b style={{ fontSize: 14 }}>내 메모</b>
+                <span style={{ fontSize: 14, whiteSpace: 'pre-wrap' }}>{override.note}</span>
+              </span>
+            </div>
+          ))}
 
         <section style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           <h2 className="section-title" style={{ fontSize: 17 }}>
