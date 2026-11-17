@@ -3,8 +3,8 @@ import { Link, useNavigate, useParams } from 'react-router-dom'
 import { findRecipe } from '../data/recipes'
 import { searchCatalog } from '../data/catalog'
 import { normalize } from '../lib/recommend'
-import { defaultCustomName, isEmptyOverride } from '../lib/custom'
-import { removeOverride, saveOverride, useOverrides } from '../store/custom'
+import { defaultCustomName } from '../lib/custom'
+import { customId, removeOverride, saveOverride, useOverrides } from '../store/custom'
 import { MinusCircleIcon, PlusIcon } from '../components/icons'
 import { BottomSheet } from '../components/BottomSheet'
 import { track } from '../lib/analytics'
@@ -54,13 +54,10 @@ export function CustomRecipeScreen() {
 
   const save = () => {
     const ov = { baseId: base.id, name: name.trim(), remove, add: add.filter((a) => a.name.trim()), note: note.trim(), updatedAt: Date.now() }
-    if (isEmptyOverride(ov, base)) {
-      removeOverride(base.id)
-    } else {
-      saveOverride(ov)
-      track('custom_saved', { recipe: base.name, removed: remove.length, added: add.length, has_note: Boolean(note.trim()), first: !existing })
-    }
-    navigate(`/recipes/${base.id}`, { replace: true })
+    // 기본 레시피는 그대로 두고 "나만의 ○○"를 따로 저장
+    saveOverride(ov)
+    track('custom_saved', { recipe: base.name, removed: remove.length, added: add.length, has_note: Boolean(note.trim()), first: !existing })
+    navigate(`/recipes/${customId(base.id)}`, { replace: true })
   }
 
   return (
@@ -69,7 +66,7 @@ export function CustomRecipeScreen() {
         <button type="button" onClick={() => navigate(-1)}>
           취소
         </button>
-        <h1>내 방식으로 고치기</h1>
+        <h1>{existing ? '나만의 레시피 고치기' : '나만의 레시피 만들기'}</h1>
         <button type="button" className="save" onClick={save}>
           저장
         </button>
@@ -209,16 +206,16 @@ export function CustomRecipeScreen() {
 
         {existing && (
           <button type="button" className="link-btn" style={{ color: 'var(--muted)' }} onClick={() => setConfirmReset(true)}>
-            기본 레시피로 되돌리기
+            이 나만의 레시피 지우기
           </button>
         )}
       </div>
 
       {confirmReset && (
-        <BottomSheet label="기본 레시피로 되돌리기" onClose={() => setConfirmReset(false)}>
-          <h2 style={{ fontSize: 20 }}>기본 레시피로 되돌릴까요?</h2>
+        <BottomSheet label="나만의 레시피 지우기" onClose={() => setConfirmReset(false)}>
+          <h2 style={{ fontSize: 20 }}>{name.trim() || defaultCustomName(base)}을 지울까요?</h2>
           <p className="subtitle" style={{ margin: 0 }}>
-            내가 고친 재료와 메모가 지워지고, 추천도 기본 레시피 기준으로 돌아가요.
+            원래 레시피 {base.name}은 그대로 남아요. 해먹은 기록도 그대로예요.
           </p>
           <button
             type="button"
@@ -229,7 +226,7 @@ export function CustomRecipeScreen() {
               navigate(`/recipes/${base.id}`, { replace: true })
             }}
           >
-            되돌리기
+            지우기
           </button>
           <button
             type="button"

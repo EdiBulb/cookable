@@ -42,12 +42,13 @@ export function RecipeThumb({
   className = 'recipe-thumb',
   fullName = false,
 }: {
-  recipe: Pick<Recipe, 'id' | 'name' | 'type'>
+  recipe: Pick<Recipe, 'id' | 'name' | 'type' | 'baseId'>
   className?: string
   /** 사진이 없을 때 첫 글자 대신 이름 전체를 보여 줄지 (타일·상세처럼 넓은 곳) */
   fullName?: boolean
 }) {
-  const url = recipePhoto(recipe.id)
+  // 나만의 레시피는 원래 레시피 사진을 같이 쓴다
+  const url = recipePhoto(recipe.baseId ?? recipe.id)
   const [bg, fg] = TYPE_TONE[recipe.type]
   if (url) {
     return (

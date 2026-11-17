@@ -10,18 +10,20 @@ import { LevelPicker } from '../components/level'
 import { BackIcon, CheckIcon, PencilIcon, PlayIcon } from '../components/icons'
 import { useOverrides, useRecipes } from '../store/custom'
 import { isUrl } from '../lib/custom'
+import { recordCook } from '../store/history'
 import { blockedBy } from '../lib/diet'
 import { recipePhoto } from '../components/RecipeThumb'
 import { useDiet } from '../store/diet'
 
 export function RecipeDetailScreen() {
   const { id = '' } = useParams()
-  const base = findRecipe(id)
-  const mine = useRecipes().find((r) => r.id === id)
-  const override = useOverrides()[id]
-  // 나만의 레시피가 있으면 기본은 "내 방식", 원래 레시피도 전환해서 볼 수 있게
-  const [showBase, setShowBase] = useState(false)
-  const recipe = mine?.custom && !showBase ? mine : base
+  const all = useRecipes()
+  const overrides = useOverrides()
+  const recipe = all.find((r) => r.id === id)
+  // 나만의 레시피면 원래 레시피, 기본 레시피면 내가 만든 나만의 버전
+  const base = recipe?.baseId ? findRecipe(recipe.baseId) : recipe
+  const override = recipe?.baseId ? overrides[recipe.baseId] : undefined
+  const myVersion = recipe && !recipe.custom ? all.find((r) => r.baseId === recipe.id) : undefined
   const { state, dispatch } = useKitchen()
   const [sheetOpen, setSheetOpen] = useState(false)
   const [draft, setDraft] = useState<Record<string, Level>>({})
@@ -42,7 +44,7 @@ export function RecipeDetailScreen() {
   }
 
   const blocked = blockedBy(recipe, diet)
-  const photo = recipePhoto(recipe.id)
+  const photo = recipePhoto(recipe.baseId ?? recipe.id)
   const fridgeByName = new Map(state.fridge.map((f) => [normalize(f.name), f]))
   const ingredients = recipe.ingredients.map((ing) => {
     const item = fridgeByName.get(normalize(ing.name))
@@ -70,7 +72,9 @@ export function RecipeDetailScreen() {
       recipe: recipe.name,
       changed: used.filter((u) => draft[u.name] !== undefined && draft[u.name] !== u.level).length,
       ingredients: used.length,
+      custom: Boolean(recipe.custom),
     })
+    recordCook(recipe)
     setSheetOpen(false)
     setSaved(true)
   }
@@ -82,7 +86,7 @@ export function RecipeDetailScreen() {
         <Link to="/" className="icon-btn" aria-label="레시피 목록으로 돌아가기">
           <BackIcon />
         </Link>
-        {mine?.custom && (
+        {recipe.custom && (
           <span className="hero-mine">
             <PencilIcon size={14} />내 레시피
           </span>
@@ -98,24 +102,6 @@ export function RecipeDetailScreen() {
             {recipe.type} · {recipe.minutes}분 · {recipe.difficulty} · {recipe.servings}인분
           </p>
         </div>
-
-        {mine?.custom && (
-          <div className="seg" role="group" aria-label="레시피 보기">
-            <button type="button" aria-pressed={!showBase} onClick={() => setShowBase(false)}>
-              내 방식
-            </button>
-            <button
-              type="button"
-              aria-pressed={showBase}
-              onClick={() => {
-                setShowBase(true)
-                track('custom_view_base', { recipe: base?.name })
-              }}
-            >
-              기본 레시피
-            </button>
-          </div>
-        )}
 
         {blocked.length > 0 && (
           <Link to="/diet" className="note-warn" style={{ textDecoration: 'none', display: 'block' }}>
@@ -133,9 +119,13 @@ export function RecipeDetailScreen() {
             <span className="count" style={{ color: missingCount ? '#b4531a' : 'var(--good)', fontWeight: 700 }}>
               {missingCount ? `${missingCount}개 부족해요` : '모두 있어요'}
             </span>
-            <Link to={`/recipes/${id}/edit`} className="custom-entry" style={{ marginLeft: 'auto' }}>
+            <Link
+              to={recipe.custom ? `/recipes/${recipe.baseId}/edit` : myVersion ? `/recipes/${myVersion.id}` : `/recipes/${id}/edit`}
+              className="custom-entry"
+              style={{ marginLeft: 'auto' }}
+            >
               <PencilIcon size={16} />
-              {mine?.custom ? '다시 고치기' : '내 방식으로 고치기'}
+              {recipe.custom ? '다시 고치기' : myVersion ? '나만의 레시피 보기' : '나만의 레시피 만들기'}
             </Link>
           </div>
           <div className="card">
@@ -198,21 +188,33 @@ export function RecipeDetailScreen() {
 
         {recipe.custom && override && override.remove.length > 0 && (
           <p className="subtitle" style={{ margin: '-12px 0 0', fontSize: 13 }}>
-            뺀 재료: {override.remove.join(', ')} · 없어도 "바로 가능"으로 추천해요
+            원래 레시피에서 뺀 재료: {override.remove.join(', ')}
           </p>
         )}
-        {showBase && mine?.custom && (
-          <p className="subtitle" style={{ margin: '-12px 0 0', fontSize: 13 }}>
-            Cookable 기본 레시피예요. 추천은 내 방식으로 계산해요.
-          </p>
+        {recipe.custom && base && (
+          <Link to={`/recipes/${base.id}`} className="custom-hint" style={{ textDecoration: 'none' }}>
+            <span style={{ flex: 1 }}>
+              원래 레시피 <b>{base.name}</b>도 그대로 있어요
+            </span>
+            <span style={{ color: 'var(--brand)', fontWeight: 700, flex: 'none' }}>보기 ›</span>
+          </Link>
         )}
-        {!mine?.custom && (
+        {!recipe.custom && myVersion && (
+          <Link to={`/recipes/${myVersion.id}`} className="custom-hint" style={{ textDecoration: 'none' }}>
+            <PencilIcon size={18} style={{ color: 'var(--brand)', flex: 'none' }} />
+            <span style={{ flex: 1 }}>
+              내가 만든 <b>{myVersion.name}</b>이 있어요
+            </span>
+            <span style={{ color: 'var(--brand)', fontWeight: 700, flex: 'none' }}>보기 ›</span>
+          </Link>
+        )}
+        {!recipe.custom && !myVersion && (
           <div className="custom-hint">
             <PencilIcon size={18} style={{ color: 'var(--brand)', flex: 'none' }} />
-            <span>영상이랑 재료가 다르면? 내 방식으로 고쳐 두면 다음부터 그 기준으로 추천해요</span>
+            <span>영상이랑 재료가 다르면? 나만의 레시피로 따로 저장해 두면 둘 다 추천받을 수 있어요</span>
           </div>
         )}
-        {mine?.custom && override?.note?.trim() &&
+        {recipe.custom && override?.note?.trim() &&
           (isUrl(override.note) ? (
             <a href={override.note.trim()} target="_blank" rel="noreferrer" className="note-card">
               <span style={{ width: 36, height: 36, borderRadius: 18, background: 'var(--ink)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', flex: 'none' }}>

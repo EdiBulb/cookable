@@ -2,11 +2,12 @@ import { useEffect, useState } from 'react'
 import { track } from '../lib/analytics'
 import { Link } from 'react-router-dom'
 import { useRecipes } from '../store/custom'
+import { summarize, useHistory, whenLabel } from '../store/history'
 import { PencilIcon } from '../components/icons'
-import { recommend, searchRecipes, type Match } from '../lib/recommend'
+import { matchRecipe, ownedSet, recommend, searchRecipes, type Match } from '../lib/recommend'
 import { useKitchen } from '../store/KitchenContext'
 import type { RecipeType } from '../types'
-import { ChevronIcon, GridIcon, ListIcon, SearchIcon } from '../components/icons'
+import { CheckIcon, ChevronIcon, GridIcon, ListIcon, SearchIcon } from '../components/icons'
 import { RecipeThumb, recipePhoto } from '../components/RecipeThumb'
 import { dayLabel, urgencyOf, urgentItems } from '../lib/expiry'
 import { blockedBy, dietSummary, isDietActive, isLight, isMild } from '../lib/diet'
@@ -91,7 +92,7 @@ function RecipeTile({ match, blocked = [] }: { match: Match; blocked?: string[] 
   const { recipe, missing, uses } = match
   const ready = missing.length === 0
   const isBlocked = blocked.length > 0
-  const hasPhoto = Boolean(recipePhoto(recipe.id))
+  const hasPhoto = Boolean(recipePhoto(recipe.baseId ?? recipe.id))
   return (
     <Link
       to={`/recipes/${recipe.id}`}
@@ -176,7 +177,9 @@ export function RecipesScreen() {
   const [type, setType] = useState<RecipeType | 'all'>('all')
   const [light, setLight] = useState(false)
   const [mild, setMild] = useState(false)
-  const [mineOnly, setMineOnly] = useState(false)
+  // 나만의 레시피 / 해먹은 요리 모아 보기 (켜면 추천 대신 그 목록)
+  const [mode, setMode] = useState<'all' | 'mine' | 'cooked'>('all')
+  const history = useHistory()
   const [view, setViewState] = useState<RecipeView>(readView)
   // 바로 만들 수 있는 요리가 많으면 몇 개만 먼저 보여 주고 "더보기" (아래 "하나만 더 사면 돼요"가 묻히지 않게)
   const [showAllCook, setShowAllCook] = useState(false)
@@ -196,14 +199,23 @@ export function RecipesScreen() {
   const q = query.trim()
   // 내 식단(알러지·베지테리안·싫어하는 재료)은 늘, 가벼운/안 매운 메뉴는 켰을 때만
   const recipes = useRecipes()
-  const mineCount = recipes.filter((r) => r.custom).length
+  const owned = ownedSet(state.fridge)
+  const mine = recipes
+    .filter((r) => r.custom)
+    .map((r) => ({ m: matchRecipe(r, owned), blocked: blockedBy(r, diet) }))
+  const cooked = summarize(history)
+  const byId = new Map(recipes.map((r) => [r.id, r]))
+  const toggleMode = (m: 'mine' | 'cooked') => {
+    const next = mode === m ? 'all' : m
+    setMode(next)
+    track('recipe_filter', { type: m, on: next === m })
+  }
   const allowed = recipes.filter((r) => blockedBy(r, diet).length === 0)
   const pool = allowed.filter(
     (r) =>
       (type === 'all' || r.type === type) &&
       (!light || isLight(r)) &&
-      (!mild || isMild(r)) &&
-      (!mineOnly || r.custom),
+      (!mild || isMild(r)),
   )
   const { canCook, oneMore } = recommend(pool, state.fridge)
   // 검색은 숨기지 않고, 식단에 안 맞는 건 이유와 함께 맨 아래로
@@ -311,6 +323,15 @@ export function RecipesScreen() {
             </section>
           )}
           <div className="pills" role="group" aria-label="요리 종류">
+            <button type="button" className="pill pill--mine" aria-pressed={mode === 'mine'} onClick={() => toggleMode('mine')}>
+              <PencilIcon size={14} />
+              나만의 레시피{mine.length > 0 ? ` ${mine.length}` : ''}
+            </button>
+            <button type="button" className="pill pill--mine" aria-pressed={mode === 'cooked'} onClick={() => toggleMode('cooked')}>
+              <CheckIcon size={14} />
+              해먹은 요리{cooked.length > 0 ? ` ${cooked.length}` : ''}
+            </button>
+            <span className="pill-sep" aria-hidden="true" />
             <button
               type="button"
               className="pill"
@@ -333,19 +354,6 @@ export function RecipesScreen() {
             >
               안 매운 메뉴
             </button>
-            {mineCount > 0 && (
-              <button
-                type="button"
-                className="pill pill--mine"
-                aria-pressed={mineOnly}
-                onClick={() => {
-                  setMineOnly((v) => !v)
-                  track('recipe_filter', { type: 'mine', on: !mineOnly })
-                }}
-              >
-                <PencilIcon size={14} />내 레시피 {mineCount}
-              </button>
-            )}
             <span className="pill-sep" aria-hidden="true" />
             {(['all', ...TYPES] as const).map((t) => (
               <button
@@ -362,6 +370,71 @@ export function RecipesScreen() {
               </button>
             ))}
           </div>
+          {mode === 'mine' ? (
+            <section style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div className="section-head">
+                <h2 className="section-title">나만의 레시피</h2>
+                <span className="count">{mine.length}개</span>
+                {mine.length > 0 && <ViewToggle view={view} onChange={setView} />}
+              </div>
+              {mine.length === 0 ? (
+                <div className="empty-state">
+                  <p>
+                    아직 나만의 레시피가 없어요.
+                    <br />
+                    레시피를 열고 "나만의 레시피 만들기"를 눌러 보세요.
+                  </p>
+                </div>
+              ) : (
+                <RecipeResults items={mine} view={view} />
+              )}
+            </section>
+          ) : mode === 'cooked' ? (
+            <section style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+              <div className="section-head">
+                <h2 className="section-title">해먹은 요리</h2>
+                <span className="count">{cooked.length}개</span>
+              </div>
+              {cooked.length === 0 ? (
+                <div className="empty-state">
+                  <p>
+                    아직 기록이 없어요.
+                    <br />
+                    요리하고 "요리 끝! 쓴 재료 체크하기"를 누르면 여기에 쌓여요.
+                  </p>
+                </div>
+              ) : (
+                <div className="card">
+                  {cooked.map((c) => {
+                    const r = byId.get(c.recipeId)
+                    const inner = (
+                      <>
+                        {r ? <RecipeThumb recipe={r} /> : <span className="recipe-thumb">{c.name[0]}</span>}
+                        <span className="row-main">
+                          {r?.name ?? c.name}
+                          {r?.custom && <span className="mine-tag">내 레시피</span>}
+                          <span className="row-sub">
+                            {whenLabel(c.lastAt)} · {c.count}번 해먹었어요
+                          </span>
+                        </span>
+                      </>
+                    )
+                    return r ? (
+                      <Link key={c.recipeId} to={`/recipes/${r.id}`} className="row cooked-row">
+                        {inner}
+                        <ChevronIcon style={{ color: 'var(--muted)', flex: 'none' }} />
+                      </Link>
+                    ) : (
+                      <div key={c.recipeId} className="row cooked-row">
+                        {inner}
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+            </section>
+          ) : (
+            <>
           <section style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div className="section-head">
               <h2 className="section-title">지금 바로 만들 수 있어요</h2>
@@ -419,6 +492,8 @@ export function RecipesScreen() {
                 </button>
               )}
             </section>
+          )}
+            </>
           )}
         </>
       )}

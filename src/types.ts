@@ -58,8 +58,18 @@ export interface Recipe {
   steps: string[]
   /** 나만의 레시피로 고친 경우: 원래 이름 (가벼운 메뉴 등 기본 레시피 기준 판단용) */
   baseName?: string
-  /** 나만의 레시피로 고친 경우 true */
+  /** 나만의 레시피면 true (기본 레시피와 따로 있는 별도 레시피) */
   custom?: boolean
+  /** 나만의 레시피의 원래 레시피 id (사진도 이걸로) */
+  baseId?: string
+}
+
+/** 해먹은 요리 기록 한 건 */
+export interface CookLog {
+  id: string
+  recipeId: string
+  name: string
+  at: number
 }
 
 /** 나만의 레시피: 기본 레시피와 다른 부분만 저장 → 기본 레시피를 고쳐도 같이 반영됨 */
