@@ -2,7 +2,7 @@
 
 정한 것 (2026-11-20)
 - 사람 꼬마 셰프, 성별이 드러나지 않는 귀여운 얼굴
-- 스타일: **픽셀 아트** (8비트 게임 스프라이트)
+- 스타일: **고화질 HD 픽셀 아트** (128px 격자, 48색, 요즘 인디 게임 느낌) — 8비트 64px은 너무 저화질이라 변경
 - 등급이 오를수록 옷으로 전문성 표현, 셰프 모자 높이 = 실력
 - 상차림은 등급마다 소반 → 12첩 수라상
 
@@ -31,8 +31,9 @@
 
 ## 공통 스타일 (모든 프롬프트 앞에 붙임)
 ```
-pixel art, 8-bit retro game sprite, 64x64 pixel grid, crisp hard pixel edges, no anti-aliasing,
-limited 16-color palette, dark 1-pixel outline, simple flat shading,
+high-resolution HD pixel art, modern indie game character art, 128x128 pixel grid,
+crisp clean pixel edges, no blur, rich 48-color palette, soft pixel shading with highlights,
+subtle dithering, detailed face and clothing folds, colored outline,
 plain solid warm cream background (#F7F3EA), centered, no text, no logo
 ```
 
