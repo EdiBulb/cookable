@@ -1,69 +1,95 @@
-# 레벨업 탭 캐릭터 — 픽셀 아트 프롬프트
+# 레벨업 탭 캐릭터 — 고화질 픽셀 아트 프롬프트 (복사해서 바로 쓰는 전체본)
 
 정한 것 (2026-11-20)
 - 사람 꼬마 셰프, 성별이 드러나지 않는 귀여운 얼굴
-- 스타일: **고화질 HD 픽셀 아트** (128px 격자, 48색, 요즘 인디 게임 느낌) — 8비트 64px은 너무 저화질이라 변경
+- 고화질 HD 픽셀 아트 (128px 격자, 48색)
 - 등급이 오를수록 옷으로 전문성 표현, 셰프 모자 높이 = 실력
-- 상차림은 등급마다 소반 → 12첩 수라상
+- 캐릭터 6장 + 상차림 6장을 따로 만들어 앱에서 나란히 놓음
 
-## 그림을 두 종류로 나눔 (추천)
-캐릭터와 상차림을 **따로** 만들고 앱에서 나란히 놓는다.
-- 캐릭터 6장: 옷만 바뀌니 얼굴이 덜 흔들림, 나중에 걷기·요리 모션 추가 쉬움
-- 상차림 6장: 결과 시트·등급 카드에 따로 써도 됨
-
-## 등급표
-| 등급 | 이름 | 캐릭터 옷차림 (새로 생기는 것) | 상차림 |
-|---|---|---|---|
-| 1 | 소반 | 평상복 + 베이지 앞치마 | 밥 한 공기 |
-| 2 | 3첩 반상 | + 빨간 목 스카프 | 반찬 3 |
-| 3 | 5첩 반상 | + 낮은 흰 셰프 모자 | 반찬 5 |
-| 4 | 7첩 반상 | 평상복 → 흰 더블 단추 셰프 재킷 | 반찬 7 |
-| 5 | 9첩 반상 | 모자가 높은 주름 모자로 + 국자 | 반찬 9, 놋그릇 |
-| 6 | 12첩 수라상 | 금 단추, 금 테두리 스카프, 금띠 모자, 가슴에 금 메달 | 궁중 수라상 |
+## 공통 캐릭터 설정 (모든 캐릭터 프롬프트에 똑같이 들어감)
+- 2.5등신 꼬마, 큰 머리, 둥근 얼굴
+- 짧은 검은 단발머리, 앞머리 일자, 까만 점 눈, 분홍 볼, 작은 미소
+- 성별이 드러나지 않음
+- 정면을 보고 서 있는 전신, 팔은 몸 옆
 
 ## 만드는 순서
-1. **0번 캐릭터 시트**를 여러 번 뽑아 1장 확정 (앞치마만 입은 1등급 모습)
-2. 캐릭터 2~6번은 **바로 앞 등급 그림을 참조 이미지로** 넣고 새로 생기는 것만 추가
-3. 상차림 1~6번은 아무 순서로 생성 (같은 팔레트 유지)
-4. 받은 그림은 `src/assets/levelup/`에 `chef-1.png`~`chef-6.png`, `table-1.png`~`table-6.png`로 넣기
-5. 변환 스크립트가 **진짜 픽셀로 정리**: 작게 줄이기(최근접 이웃) → 팔레트 정리 → 화면에서는 `image-rendering: pixelated`로 확대
-6. 잠긴 등급은 따로 안 만듦 (코드에서 회색 실루엣)
+1. **0번**을 여러 번 뽑아 마음에 드는 1장 확정 → 이게 "공통 캐릭터"
+2. **1번**: 0번을 참조 이미지로 넣고 생성
+3. **2~6번**: 바로 앞 번호 그림을 참조 이미지로 넣고 생성
+4. **상차림 T1~T6**: 참조 이미지 없이, 아무 순서로
+5. 받은 그림을 `src/assets/levelup/chef-1.png`~`chef-6.png`, `table-1.png`~`table-6.png`로 넣으면 변환 스크립트가 정리
 
-## 공통 스타일 (모든 프롬프트 앞에 붙임)
-```
-high-resolution HD pixel art, modern indie game character art, 128x128 pixel grid,
-crisp clean pixel edges, no blur, rich 48-color palette, soft pixel shading with highlights,
-subtle dithering, detailed face and clothing folds, colored outline,
-plain solid warm cream background (#F7F3EA), centered, no text, no logo
-```
+---
 
-## 캐릭터 (공통 줄)
+## 0. 공통 캐릭터 시트
 ```
-[공통 스타일], a cute little Korean chef character, chibi proportions with a big head,
-gender-neutral round face, black dot eyes, rosy cheeks, short black bob hair,
-front-facing full body standing pose, same character design in every image,
+high-resolution HD pixel art, modern indie game character art, 128x128 pixel grid, crisp clean pixel edges, no blur, rich 48-color palette, soft pixel shading with highlights, subtle dithering, detailed face and clothing folds, colored outline, plain solid warm cream background (#F7F3EA), no text, no logo.
+Character sheet of one cute little Korean chef character: chibi proportions about 2.5 heads tall with a big head, round gender-neutral face, short straight black bob hair with blunt bangs, small black dot eyes, pink rosy cheeks, small gentle smile.
+Outfit: plain light-gray t-shirt, dark navy pants, brown shoes, beige bib apron tied at the waist.
+Show the same character four times side by side: front view, side view, back view, and a close-up row of three faces (happy, proud, surprised). Consistent design, evenly spaced.
 ```
 
-| 번호 | 옷차림 줄 |
-|---|---|
-| 0 (시트) | `character sprite sheet: front, side and back view, plus happy, proud and surprised faces, wearing a plain light-gray t-shirt, dark pants and a beige bib apron` |
-| 1 | `wearing a plain light-gray t-shirt, dark pants and a beige bib apron, eager and a little nervous expression` |
-| 2 | `same outfit as the reference image, now also wearing a small red neckerchief around the neck` |
-| 3 | `same outfit as the reference image, now also wearing a short white chef hat` |
-| 4 | `the t-shirt is replaced by a white double-breasted chef jacket with white buttons, keep the beige apron, red neckerchief and short white chef hat` |
-| 5 | `same chef jacket, apron and red neckerchief, the hat is now a tall pleated white chef toque, holding a small wooden ladle, confident smile` |
-| 6 | `white chef jacket with gold buttons, red neckerchief with gold trim, the tallest pleated white chef toque with a gold band, a small gold medal on the chest, proud master chef pose, a few sparkle pixels` |
-
-## 상차림 (공통 줄)
+## 1단계 · 소반 — 앞치마 하나
 ```
-[공통 스타일], a traditional Korean meal table seen from a slight top-down angle, game item icon style,
+high-resolution HD pixel art, modern indie game character art, 128x128 pixel grid, crisp clean pixel edges, no blur, rich 48-color palette, soft pixel shading with highlights, subtle dithering, detailed face and clothing folds, colored outline, plain solid warm cream background (#F7F3EA), centered, no text, no logo.
+Same character as the reference image, keep the face, hair, body proportions and colors exactly the same: a cute little Korean chef, chibi about 2.5 heads tall, round gender-neutral face, short straight black bob hair with blunt bangs, black dot eyes, pink cheeks.
+Outfit: plain light-gray t-shirt, dark navy pants, brown shoes, beige bib apron tied at the waist. No hat, no scarf.
+Front-facing full body standing pose, arms at the sides, eager and slightly nervous smile, a beginner cook.
 ```
 
-| 번호 | 상차림 줄 |
-|---|---|
-| 1 | `a small round wooden soban with one bowl of white rice and chopsticks` |
-| 2 | `a small wooden table with rice, soup, kimchi and three small side dishes` |
-| 3 | `a wooden table with rice, soup, kimchi and five side dishes including a grilled fish` |
-| 4 | `a wider wooden table with rice, soup, kimchi and seven side dishes including savory pancakes` |
-| 5 | `an elegant red lacquered table with brass bowls and nine colorful side dishes` |
-| 6 | `a lavish royal surasang on two red lacquered tables, shiny gold brass bowls, twelve side dishes, sparkle pixels` |
+## 2단계 · 3첩 반상 — + 목 스카프
+```
+high-resolution HD pixel art, modern indie game character art, 128x128 pixel grid, crisp clean pixel edges, no blur, rich 48-color palette, soft pixel shading with highlights, subtle dithering, detailed face and clothing folds, colored outline, plain solid warm cream background (#F7F3EA), centered, no text, no logo.
+Same character as the reference image, keep the face, hair, body proportions, pose and colors exactly the same: a cute little Korean chef, chibi about 2.5 heads tall, round gender-neutral face, short straight black bob hair with blunt bangs, black dot eyes, pink cheeks.
+Outfit: the same light-gray t-shirt, dark navy pants, brown shoes and beige bib apron as the reference. NEW: a small red chef neckerchief tied around the neck with a knot at the front. No hat.
+Front-facing full body standing pose, cheerful smile.
+```
+
+## 3단계 · 5첩 반상 — + 셰프 모자
+```
+high-resolution HD pixel art, modern indie game character art, 128x128 pixel grid, crisp clean pixel edges, no blur, rich 48-color palette, soft pixel shading with highlights, subtle dithering, detailed face and clothing folds, colored outline, plain solid warm cream background (#F7F3EA), centered, no text, no logo.
+Same character as the reference image, keep the face, hair, body proportions, pose and colors exactly the same: a cute little Korean chef, chibi about 2.5 heads tall, round gender-neutral face, short straight black bob hair with blunt bangs, black dot eyes, pink cheeks.
+Outfit: the same light-gray t-shirt, dark navy pants, brown shoes, beige bib apron and red neckerchief as the reference. NEW: a short, low white chef hat on the head (only slightly taller than a cap).
+Front-facing full body standing pose, happy confident smile.
+```
+
+## 4단계 · 7첩 반상 — 셰프 재킷
+```
+high-resolution HD pixel art, modern indie game character art, 128x128 pixel grid, crisp clean pixel edges, no blur, rich 48-color palette, soft pixel shading with highlights, subtle dithering, detailed face and clothing folds, colored outline, plain solid warm cream background (#F7F3EA), centered, no text, no logo.
+Same character as the reference image, keep the face, hair, body proportions, pose and colors exactly the same: a cute little Korean chef, chibi about 2.5 heads tall, round gender-neutral face, short straight black bob hair with blunt bangs, black dot eyes, pink cheeks.
+Outfit: NEW: the gray t-shirt is replaced by a crisp white double-breasted chef jacket with two rows of white buttons. Keep the beige bib apron over the jacket, the red neckerchief, the short low white chef hat, dark navy pants and brown shoes.
+Front-facing full body standing pose, proud smile, looks like a real cook now.
+```
+
+## 5단계 · 9첩 반상 — 높은 셰프 모자 + 국자
+```
+high-resolution HD pixel art, modern indie game character art, 128x128 pixel grid, crisp clean pixel edges, no blur, rich 48-color palette, soft pixel shading with highlights, subtle dithering, detailed face and clothing folds, colored outline, plain solid warm cream background (#F7F3EA), centered, no text, no logo.
+Same character as the reference image, keep the face, hair, body proportions and colors exactly the same: a cute little Korean chef, chibi about 2.5 heads tall, round gender-neutral face, short straight black bob hair with blunt bangs, black dot eyes, pink cheeks.
+Outfit: the same white double-breasted chef jacket, beige bib apron, red neckerchief, dark navy pants and brown shoes as the reference. NEW: the hat is now a tall pleated white chef toque (about as tall as the head). NEW: holding a small wooden ladle in one hand.
+Front-facing full body standing pose, confident skilled-chef smile.
+```
+
+## 6단계 · 12첩 수라상 — 금장 마스터 셰프
+```
+high-resolution HD pixel art, modern indie game character art, 128x128 pixel grid, crisp clean pixel edges, no blur, rich 48-color palette, soft pixel shading with highlights, subtle dithering, detailed face and clothing folds, colored outline, plain solid warm cream background (#F7F3EA), centered, no text, no logo.
+Same character as the reference image, keep the face, hair, body proportions and colors exactly the same: a cute little Korean chef, chibi about 2.5 heads tall, round gender-neutral face, short straight black bob hair with blunt bangs, black dot eyes, pink cheeks.
+Outfit: NEW master chef version: white double-breasted chef jacket with shiny gold buttons, red neckerchief with gold trim, the tallest pleated white chef toque with a gold band around it, a small gold medal on a red ribbon on the chest, the beige apron, dark navy pants and brown shoes. Holding the wooden ladle.
+Front-facing full body standing pose, proud master chef pose with a big smile, a few small gold sparkle pixels around.
+```
+
+---
+
+## 상차림 T1~T6 (참조 이미지 없이)
+공통 앞부분:
+```
+high-resolution HD pixel art, modern indie game item art, 128x128 pixel grid, crisp clean pixel edges, no blur, rich 48-color palette, soft pixel shading with highlights, subtle dithering, colored outline, plain solid warm cream background (#F7F3EA), centered, no text, no logo.
+A traditional Korean meal table seen from a slight top-down three-quarter angle, no people.
+```
+| 번호 | 이름 | 뒤에 붙일 줄 |
+|---|---|---|
+| T1 | 소반 | `A small round wooden soban with one bowl of white rice and a pair of chopsticks, simple and humble.` |
+| T2 | 3첩 반상 | `A small wooden table with a bowl of rice, a bowl of soup, kimchi and three small side dishes.` |
+| T3 | 5첩 반상 | `A wooden table with rice, soup, kimchi and five side dishes including a grilled fish and seasoned greens.` |
+| T4 | 7첩 반상 | `A wider wooden table with rice, soup, kimchi and seven side dishes including savory pancakes and a braised meat dish.` |
+| T5 | 9첩 반상 | `An elegant red lacquered table with shiny brass bowls, rice, soup, kimchi and nine colorful side dishes.` |
+| T6 | 12첩 수라상 | `A lavish royal Korean surasang on two red lacquered tables, gleaming gold-brass bowls, twelve colorful side dishes, small gold sparkle pixels.` |
