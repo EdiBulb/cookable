@@ -1,4 +1,4 @@
-import { useState, type FormEvent } from 'react'
+import { useEffect, useRef, useState, type FormEvent } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { track } from '../lib/analytics'
 import type { CartItem } from '../types'
@@ -6,6 +6,8 @@ import { useKitchen } from '../store/KitchenContext'
 import { CheckIcon, CloseIcon, PlusIcon } from '../components/icons'
 import { searchCatalog } from '../data/catalog'
 import { normalize } from '../lib/recommend'
+import { catalogMatch, parseMulti, STARTER_BUYS, topFrequent } from '../lib/cartInput'
+import { recordBuys, useBuyFreq } from '../store/buyFreq'
 
 const SECTION_TITLE: Record<CartItem['source'], string> = {
   auto: '다 떨어져서 자동으로 담겼어요',
@@ -18,31 +20,84 @@ export function CartScreen() {
   const { state, dispatch } = useKitchen()
   const navigate = useNavigate()
   const [draft, setDraft] = useState('')
+  const [unchecked, setUnchecked] = useState<Set<string>>(() => new Set())
+  const [notice, setNotice] = useState<string | null>(null)
+  const inputRef = useRef<HTMLInputElement>(null)
+  const noticeTimer = useRef<number | undefined>(undefined)
+  const freq = useBuyFreq()
 
   // 재료 목록에 있는 재료면 그 이름으로 담아야, 장보기 끝낼 때 냉장고 제자리(칸·종류)로 들어간다
   const suggestions = searchCatalog(draft, 6, normalize)
+  const multi = parseMulti(draft)
+  const picked = multi.filter((t) => !unchecked.has(t.name) && !state.cart.some((c) => !c.done && c.name === t.name))
+
+  const showNotice = (text: string) => {
+    setNotice(text)
+    window.clearTimeout(noticeTimer.current)
+    noticeTimer.current = window.setTimeout(() => setNotice(null), 1800)
+  }
+  useEffect(() => () => window.clearTimeout(noticeTimer.current), [])
+
+  /** 담은 뒤에도 키패드가 내려가지 않게 입력칸에 커서를 돌려 둔다 */
+  const keepTyping = () => inputRef.current?.focus({ preventScroll: true })
+  /** 버튼을 눌러도 입력칸이 포커스를 잃지 않게 (포커스가 버튼으로 가면 폰이 키패드를 닫는다) */
+  const holdFocus = (e: { preventDefault: () => void }) => e.preventDefault()
+
+  const addNames = (names: string[], how: 'catalog' | 'typed' | 'multi' | 'chip') => {
+    const cartNames = new Set(state.cart.filter((c) => !c.done).map((c) => c.name))
+    const fresh = names.filter((n) => !cartNames.has(n))
+    for (const name of fresh) dispatch({ type: 'addToCart', name, source: 'manual' })
+    recordBuys(fresh)
+    track('cart_add', { source: 'manual', how, count: fresh.length })
+    if (fresh.length === 0) showNotice(names.length === 1 ? `${names[0]}은(는) 이미 담겨 있어요` : '이미 다 담겨 있어요')
+    else if (fresh.length === 1) showNotice(`✓ ${fresh[0]} 담았어요`)
+    else showNotice(`✓ ${fresh.length}개 담았어요`)
+  }
 
   const add = (name: string, fromList: boolean) => {
-    dispatch({ type: 'addToCart', name, source: 'manual' })
-    track('cart_add', { source: 'manual', from_catalog: fromList })
+    addNames([name], fromList ? 'catalog' : 'typed')
     setDraft('')
+    keepTyping()
+  }
+
+  const addPicked = () => {
+    if (picked.length === 0) return
+    addNames(
+      picked.map((t) => t.name),
+      'multi',
+    )
+    setDraft('')
+    setUnchecked(new Set())
+    keepTyping()
   }
 
   const addManual = (e: FormEvent) => {
     e.preventDefault()
+    if (multi.length > 0) return addPicked()
     const name = draft.trim()
     if (!name) return
     // 엔터를 누르면: 목록에 똑같은 이름(또는 별칭)이 있으면 그걸로
-    const exact = suggestions.find((c) => c.name.replace(/\s/g, '') === name.replace(/\s/g, '') || c.name === normalize(name))
-    add(exact ? exact.name : name, Boolean(exact))
+    const exact = catalogMatch(name)
+    add(exact ?? name, Boolean(exact))
   }
 
-  const inCart = new Set(state.cart.map((c) => c.name))
+  const toggleToken = (name: string) =>
+    setUnchecked((prev) => {
+      const next = new Set(prev)
+      if (next.has(name)) next.delete(name)
+      else next.add(name)
+      return next
+    })
+
+  const inCart = new Set(state.cart.filter((c) => !c.done).map((c) => c.name))
+  const hasHistory = Object.keys(freq).length > 0
+  const quick = hasHistory ? topFrequent(freq, inCart, 8) : STARTER_BUYS.filter((n) => !inCart.has(n))
   const soon = state.fridge.filter((f) => f.level === 1 && !inCart.has(f.name))
   const bought = state.cart.filter((c) => c.done).length
 
   const finish = () => {
     track('shopping_finished', { count: bought })
+    recordBuys(state.cart.filter((c) => c.done && c.source !== 'manual').map((c) => c.name))
     dispatch({ type: 'finishShopping' })
     navigate('/kitchen')
   }
@@ -69,23 +124,64 @@ export function CartScreen() {
         </label>
         <input
           id="cart-add"
-          placeholder="재료나 물건 이름 (예: 토마토, 휴지)"
+          ref={inputRef}
+          placeholder="재료나 물건 (여러 개는 쉼표로: 양파, 두부)"
           autoComplete="off"
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
-          enterKeyHint="done"
+          enterKeyHint="enter"
         />
         <button
           type="submit"
           aria-label="추가"
-          disabled={!draft.trim()}
+          disabled={multi.length > 0 ? picked.length === 0 : !draft.trim()}
+          onPointerDown={holdFocus}
+          onMouseDown={holdFocus}
           style={{ width: 40, height: 40, flex: 'none', border: 0, borderRadius: 10, background: draft.trim() ? 'var(--brand)' : 'var(--line)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
         >
           <PlusIcon />
         </button>
       </form>
 
-      {draft.trim() && (
+      <p className="cart-notice" role="status" aria-live="polite" data-show={Boolean(notice)}>
+        {notice}
+      </p>
+
+      {multi.length > 0 ? (
+        <div className="suggest" aria-label="쉼표로 나눈 재료">
+          {multi.map((t) => {
+            const already = inCart.has(t.name)
+            const on = !already && !unchecked.has(t.name)
+            return (
+              <button
+                key={t.name}
+                type="button"
+                role="checkbox"
+                aria-checked={on}
+                className="suggest-row multi-row"
+                disabled={already}
+                onPointerDown={holdFocus}
+                onMouseDown={holdFocus}
+                onClick={() => toggleToken(t.name)}
+              >
+                <span className="multi-check" data-on={on} aria-hidden="true">
+                  {on && <CheckIcon />}
+                </span>
+                <span style={{ flex: 1, minWidth: 0 }}>
+                  {t.name}
+                  {t.inCatalog && t.name !== t.raw && <span className="multi-from"> ({t.raw})</span>}
+                </span>
+                <span className="row-sub" data-muted={!t.inCatalog || already}>
+                  {already ? '이미 담겼어요' : t.inCatalog ? '재료 목록' : '직접 입력'}
+                </span>
+              </button>
+            )
+          })}
+          <button type="button" className="multi-add" disabled={picked.length === 0} onPointerDown={holdFocus} onMouseDown={holdFocus} onClick={addPicked}>
+            {picked.length === 0 ? '담을 재료를 골라 주세요' : `${picked.length}개 담기`}
+          </button>
+        </div>
+      ) : draft.trim() ? (
         <div className="suggest" role="listbox" aria-label="재료 목록에서 고르기">
           {suggestions.map((c) => {
             const already = inCart.has(c.name)
@@ -97,6 +193,8 @@ export function CartScreen() {
                 aria-selected={false}
                 className="suggest-row"
                 disabled={already}
+                onPointerDown={holdFocus}
+                onMouseDown={holdFocus}
                 onClick={() => add(c.name, true)}
               >
                 <span>{c.name}</span>
@@ -105,12 +203,44 @@ export function CartScreen() {
             )
           })}
           {!suggestions.some((c) => c.name === draft.trim() || c.name === normalize(draft)) && (
-            <button type="button" role="option" aria-selected={false} className="suggest-row" onClick={() => add(draft.trim(), false)}>
+            <button
+              type="button"
+              role="option"
+              aria-selected={false}
+              className="suggest-row"
+              onPointerDown={holdFocus}
+              onMouseDown={holdFocus}
+              onClick={() => add(draft.trim(), false)}
+            >
               <span>"{draft.trim()}" 그대로 추가</span>
               <span className="row-sub">목록에 없는 물건</span>
             </button>
           )}
         </div>
+      ) : (
+        quick.length > 0 && (
+          <div className="quick-buys">
+            <span className="quick-label">{hasHistory ? '자주 사는 것' : '자주 사는 장보기'}</span>
+            <div className="quick-chips">
+              {quick.map((name) => (
+                <button
+                  key={name}
+                  type="button"
+                  className="quick-chip"
+                  onPointerDown={holdFocus}
+                  onMouseDown={holdFocus}
+                  onClick={() => {
+                    const typing = document.activeElement === inputRef.current
+                    addNames([name], 'chip')
+                    if (typing) keepTyping()
+                  }}
+                >
+                  + {name}
+                </button>
+              ))}
+            </div>
+          </div>
+        )
       )}
 
       {state.cart.length === 0 && (

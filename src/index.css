@@ -452,3 +452,21 @@ a { color: var(--brand); }
 .account-privacy { font-size: 12px; color: var(--muted); }
 .privacy h2 { font-size: 16px; margin: 20px 0 6px; }
 .privacy p, .privacy li { font-size: 14px; line-height: 1.6; color: var(--ink-2); }
+
+/* 장바구니 연속 추가 */
+.cart-notice { margin: -6px 2px 0; min-height: 0; height: 0; overflow: hidden; font-size: 13px; font-weight: 700; color: var(--brand); transition: height 0.15s ease; }
+.cart-notice[data-show='true'] { height: 18px; }
+.multi-row { justify-content: flex-start; -webkit-tap-highlight-color: transparent; }
+.quick-chip, .suggest-row, .multi-add { -webkit-tap-highlight-color: transparent; }
+.multi-check { flex: none; width: 22px; height: 22px; border-radius: 6px; border: 2px solid var(--border); display: inline-flex; align-items: center; justify-content: center; color: #fff; }
+.multi-check[data-on='true'] { background: var(--brand); border-color: var(--brand); }
+.multi-check svg { width: 14px; height: 14px; }
+.multi-from { color: var(--muted); font-size: 13px; }
+.suggest-row .row-sub[data-muted='true'] { color: var(--muted); font-weight: 600; }
+.multi-add { height: 48px; border: 0; background: var(--brand); color: #fff; font-family: inherit; font-size: 15px; font-weight: 700; }
+.multi-add:disabled { background: var(--line); color: var(--muted); }
+.quick-buys { margin-top: -6px; display: flex; flex-direction: column; gap: 8px; }
+.quick-label { font-size: 12.5px; font-weight: 700; color: var(--muted); }
+.quick-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.quick-chip { height: 34px; padding: 0 12px; border-radius: 17px; border: 1px solid var(--border); background: var(--surface); font-family: inherit; font-size: 14px; font-weight: 600; color: var(--ink); }
+.quick-chip:active { background: var(--brand-soft); }

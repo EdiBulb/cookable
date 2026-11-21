@@ -16,6 +16,7 @@ export const SYNC_KEYS = [
   'cookable:history:v1',
   'cookable:wish:v1',
   'cookable:diet:v1',
+  'cookable:buyfreq:v1',
 ] as const
 
 const MARK_USER = 'cookable:sync:user' // 이 기기가 마지막으로 맞춘 계정
