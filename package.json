@@ -13,6 +13,7 @@
     "photos:list": "tsx scripts/recipe-photos.ts list"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.119.2",
     "posthog-js": "^1.447.3",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",

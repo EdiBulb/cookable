@@ -11,6 +11,8 @@ import { isIntroOff, setIntroOff } from '../components/Splash'
 import { track } from '../lib/analytics'
 import { useDiet } from '../store/diet'
 import { dietSummary, isDietActive } from '../lib/diet'
+import { AccountCard } from '../components/AccountCard'
+import { useSync } from '../lib/sync'
 
 const FEEDBACK_EMAIL = 'hello@abracadelulu.com'
 
@@ -22,6 +24,8 @@ export function SettingsScreen() {
   const [introOff, setIntro] = useState(() => isIntroOff())
   const [confirmReset, setConfirmReset] = useState(false)
   const diet = useDiet()
+  const sync = useSync()
+  const backedUp = sync.status === 'synced' || sync.status === 'saving'
 
   useEffect(() => subscribeInstall(() => setInstall(getInstallState())), [])
 
@@ -68,8 +72,10 @@ export function SettingsScreen() {
         <p className="settings-hero-value">
           재료 {state.fridge.length}개 · 장바구니 {cartCount}개
         </p>
-        <p className="settings-hero-note">이 폰의 이 브라우저에만 저장돼요</p>
+        <p className="settings-hero-note">{backedUp ? '구글 계정에 자동 백업 중이에요' : '이 폰의 이 브라우저에만 저장돼요'}</p>
       </section>
+
+      <AccountCard />
 
       <section className="card settings-install">
         <svg aria-hidden="true" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

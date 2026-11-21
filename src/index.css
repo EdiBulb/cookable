@@ -441,3 +441,14 @@ a { color: var(--brand); }
 .wish-link { border-style: dashed; color: var(--brand); font-weight: 700; }
 .wish-summary { display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 14px; background: var(--brand-soft); }
 .wish-add .btn { flex: none; width: auto; }
+
+/* 계정 · 백업 */
+.account-card { display: flex; flex-direction: column; gap: 12px; padding: 16px; }
+.btn--google { display: inline-flex; align-items: center; justify-content: center; gap: 10px; background: var(--surface); color: var(--ink); border: 1px solid var(--border); }
+.account-status { margin: 0; font-size: 13px; font-weight: 600; color: var(--brand); }
+.account-status[data-error='true'] { color: #b42318; }
+.account-error { margin: 0; font-size: 13px; color: #b42318; }
+.account-logout { align-self: flex-start; padding: 0; border: 0; background: none; font-family: inherit; font-size: 13px; color: var(--muted); text-decoration: underline; }
+.account-privacy { font-size: 12px; color: var(--muted); }
+.privacy h2 { font-size: 16px; margin: 20px 0 6px; }
+.privacy p, .privacy li { font-size: 14px; line-height: 1.6; color: var(--ink-2); }
