@@ -33,7 +33,7 @@ export interface FridgeItem {
   useBy?: number
 }
 
-export type CartSource = 'auto' | 'recipe' | 'manual'
+export type CartSource = 'auto' | 'recipe' | 'wish' | 'manual'
 
 export interface CartItem {
   id: string
@@ -84,4 +84,18 @@ export interface RecipeOverride {
   /** 참고한 영상 링크나 메모 */
   note?: string
   updatedAt: number
+}
+
+/** 해볼 요리: 앞으로 해먹고 싶은 메뉴 (장보기 계획용) */
+export interface WishItem {
+  id: string
+  /** 사용자가 적은 이름 (레시피가 있으면 레시피 이름) */
+  name: string
+  /** 앱에 있는 레시피면 그 id */
+  recipeId?: string
+  /** 레시피가 없는 메뉴: 사용자가 직접 적은 재료 */
+  ingredients?: string[]
+  addedAt: number
+  /** 나중에 "이번 주 식단"으로 키울 때 쓸 자리 (요일, 0=일) */
+  day?: number
 }

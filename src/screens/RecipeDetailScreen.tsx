@@ -11,6 +11,7 @@ import { BackIcon, CheckIcon, PencilIcon, PlayIcon } from '../components/icons'
 import { useOverrides, useRecipes } from '../store/custom'
 import { isUrl } from '../lib/custom'
 import { recordCook } from '../store/history'
+import { addWish, completeWish, removeWish, useWishes } from '../store/wish'
 import { blockedBy } from '../lib/diet'
 import { recipePhoto } from '../components/RecipeThumb'
 import { useDiet } from '../store/diet'
@@ -29,6 +30,8 @@ export function RecipeDetailScreen() {
   const [draft, setDraft] = useState<Record<string, Level>>({})
   const [saved, setSaved] = useState(false)
   const diet = useDiet()
+  const wishes = useWishes()
+  const wished = recipe ? wishes.find((w) => w.recipeId === recipe.id || w.name === recipe.name) : undefined
 
   useEffect(() => {
     if (recipe) track('recipe_view', { recipe: recipe.name, type: recipe.type })
@@ -75,6 +78,7 @@ export function RecipeDetailScreen() {
       custom: Boolean(recipe.custom),
     })
     recordCook(recipe)
+    completeWish(recipe)
     setSheetOpen(false)
     setSaved(true)
   }
@@ -101,6 +105,18 @@ export function RecipeDetailScreen() {
           <p className="subtitle" style={{ fontSize: 14, marginTop: 6 }}>
             {recipe.type} · {recipe.minutes}분 · {recipe.difficulty} · {recipe.servings}인분
           </p>
+          <button
+            type="button"
+            className="wish-toggle"
+            aria-pressed={!!wished}
+            onClick={() => {
+              if (wished) removeWish(wished.id)
+              else addWish({ name: recipe.name, recipeId: recipe.id })
+              track('wish_toggle', { on: !wished, where: 'detail', recipe: recipe.name })
+            }}
+          >
+            {wished ? '해볼 요리에 있어요' : '+ 해볼 요리에 넣기'}
+          </button>
         </div>
 
         {blocked.length > 0 && (

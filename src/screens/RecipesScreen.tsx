@@ -13,6 +13,8 @@ import { dayLabel, urgencyOf, urgentItems } from '../lib/expiry'
 import { blockedBy, dietSummary, isDietActive, isLight, isMild } from '../lib/diet'
 import { useDiet } from '../store/diet'
 import { EmptyFridgeButton } from '../components/EmptyFridge'
+import { WishList } from '../components/WishList'
+import { useWishes } from '../store/wish'
 
 /** 레시피 카드 한 장: 부족한 재료가 있으면 바로 장바구니에 담을 수 있다 */
 function RecipeCard({ match, blocked = [] }: { match: Match; blocked?: string[] }) {
@@ -178,8 +180,9 @@ export function RecipesScreen() {
   const [light, setLight] = useState(false)
   const [mild, setMild] = useState(false)
   // 나만의 레시피 / 해먹은 요리 모아 보기 (켜면 추천 대신 그 목록)
-  const [mode, setMode] = useState<'all' | 'mine' | 'cooked'>('all')
+  const [mode, setMode] = useState<'all' | 'mine' | 'cooked' | 'wish'>('all')
   const history = useHistory()
+  const wishes = useWishes()
   const [view, setViewState] = useState<RecipeView>(readView)
   // 바로 만들 수 있는 요리가 많으면 몇 개만 먼저 보여 주고 "더보기" (아래 "하나만 더 사면 돼요"가 묻히지 않게)
   const [showAllCook, setShowAllCook] = useState(false)
@@ -205,7 +208,7 @@ export function RecipesScreen() {
     .map((r) => ({ m: matchRecipe(r, owned), blocked: blockedBy(r, diet) }))
   const cooked = summarize(history)
   const byId = new Map(recipes.map((r) => [r.id, r]))
-  const toggleMode = (m: 'mine' | 'cooked') => {
+  const toggleMode = (m: 'mine' | 'cooked' | 'wish') => {
     const next = mode === m ? 'all' : m
     setMode(next)
     track('recipe_filter', { type: m, on: next === m })
@@ -331,6 +334,9 @@ export function RecipesScreen() {
               <CheckIcon size={14} />
               해먹은 요리{cooked.length > 0 ? ` ${cooked.length}` : ''}
             </button>
+            <button type="button" className="pill pill--mine" aria-pressed={mode === 'wish'} onClick={() => toggleMode('wish')}>
+              해볼 요리{wishes.length > 0 ? ` ${wishes.length}` : ''}
+            </button>
             <span className="pill-sep" aria-hidden="true" />
             <button
               type="button"
@@ -370,7 +376,9 @@ export function RecipesScreen() {
               </button>
             ))}
           </div>
-          {mode === 'mine' ? (
+          {mode === 'wish' ? (
+            <WishList recipes={recipes} />
+          ) : mode === 'mine' ? (
             <section style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
               <div className="section-head">
                 <h2 className="section-title">나만의 레시피</h2>

@@ -422,3 +422,22 @@ a { color: var(--brand); }
 .small-btn { height: 32px; padding: 0 10px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); font-family: inherit; font-size: 12px; font-weight: 700; color: var(--ink-2); }
 .cooked-row { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--ink); }
 .cooked-row .recipe-thumb { width: 48px; height: 48px; border-radius: 12px; font-size: 18px; }
+
+/* 해볼 요리 */
+.wish-toggle { margin-top: 10px; display: inline-flex; align-items: center; height: 34px; padding: 0 14px; border-radius: 17px; border: 1.5px solid var(--brand); background: var(--surface); color: var(--brand); font-family: inherit; font-size: 13px; font-weight: 700; }
+.wish-toggle[aria-pressed='true'] { background: var(--brand); color: #fff; }
+.wish-add { display: flex; gap: 8px; }
+.wish-add input { flex: 1; min-width: 0; height: 44px; padding: 0 14px; border-radius: 12px; border: 1px solid var(--border); background: var(--surface); font-family: inherit; font-size: 15px; }
+.wish-card { display: flex; flex-direction: column; gap: 8px; padding: 14px; border-radius: 14px; background: var(--surface); border: 1px solid var(--border); }
+.wish-card-head { display: flex; align-items: center; gap: 10px; }
+.wish-card-head .row-main { flex: 1; min-width: 0; font-weight: 700; color: var(--ink); text-decoration: none; }
+.wish-x { flex: none; width: 32px; height: 32px; border: 0; border-radius: 16px; background: transparent; color: var(--muted); font-size: 18px; }
+.wish-chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.wish-chip { display: inline-flex; align-items: center; gap: 4px; height: 26px; padding: 0 10px; border-radius: 13px; font-size: 12.5px; font-weight: 600; background: #fdf0e6; color: #b4531a; }
+.wish-chip[data-owned='true'] { background: var(--brand-soft); color: var(--brand); }
+.wish-unknown { font-size: 13px; color: var(--ink-2); display: flex; flex-direction: column; gap: 8px; }
+.wish-similar { display: flex; flex-wrap: wrap; gap: 6px; }
+.wish-similar button, .wish-link { height: 30px; padding: 0 12px; border-radius: 15px; border: 1px solid var(--border); background: var(--surface); font-family: inherit; font-size: 13px; color: var(--ink); }
+.wish-link { border-style: dashed; color: var(--brand); font-weight: 700; }
+.wish-summary { display: flex; flex-direction: column; gap: 10px; padding: 14px; border-radius: 14px; background: var(--brand-soft); }
+.wish-add .btn { flex: none; width: auto; }

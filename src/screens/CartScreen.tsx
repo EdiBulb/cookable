@@ -10,6 +10,7 @@ import { normalize } from '../lib/recommend'
 const SECTION_TITLE: Record<CartItem['source'], string> = {
   auto: '다 떨어져서 자동으로 담겼어요',
   recipe: '레시피에서 담았어요',
+  wish: '해볼 요리에서 가져왔어요',
   manual: '직접 추가했어요',
 }
 
@@ -124,7 +125,7 @@ export function CartScreen() {
         </div>
       )}
 
-      {(['auto', 'recipe', 'manual'] as const).map((source) => {
+      {(['auto', 'recipe', 'wish', 'manual'] as const).map((source) => {
         const items = state.cart.filter((c) => c.source === source)
         if (items.length === 0) return null
         return (
