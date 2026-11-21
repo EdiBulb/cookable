@@ -287,6 +287,10 @@
 
 ### 식품안전나라 레시피 API 연동
 본인인증(한국 휴대폰 문자)이 가능해지면 진행
+- 2026-11-21 확인: 간편인증으로도 가입 불가(Harry 한국 번호 정지). 남은 길은 한국 가족 명의로 키 발급
+- 2026-11-21 sample 키로 응답 확인: 총 1,156개, sample은 5개까지만. 필드 RCP_NM, RCP_PAT2(반찬 등), RCP_WAY2(찌기 등), RCP_PARTS_DTLS(재료 자유 텍스트, "연두부 75g(3/4모), …", "●양념장 :" 같은 소제목), MANUAL01~20 + MANUAL_IMG01~20(단계 사진), ATT_FILE_NO_MAIN(완성 사진), INFO_ENG/NA 등 영양, RCP_NA_TIP(저염 팁)
+- 성격: 저염·건강식 위주(예: 부추 콩가루 찜, 방울토마토 소박이) → 자취요리 보충용, 사진은 큰 장점
+- 계획: 키로 한 번만 전부 받아 정리한 JSON을 저장소에 커밋(빌드마다 호출 X, 키를 GitHub에 안 둠), 출처 표시
 1. foodsafetykorea.go.kr 개인회원 가입 → 데이터활용서비스에서 '조리식품의 레시피 DB'(COOKRCP01) 이용신청 (무료, 자동 승인)
 2. `https://openapi.foodsafetykorea.go.kr/api/<인증키>/COOKRCP01/json/1/5` 로 응답 확인
 3. GitHub → Settings → Secrets and variables → Actions → `FOOD_API_KEY` 등록
