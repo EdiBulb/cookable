@@ -6,7 +6,10 @@ import { useKitchen } from '../store/KitchenContext'
 import { CheckIcon, CloseIcon, PlusIcon } from '../components/icons'
 import { searchCatalog } from '../data/catalog'
 import { normalize } from '../lib/recommend'
-import { catalogMatch, parseMulti, STARTER_BUYS, topFrequent } from '../lib/cartInput'
+import { catalogMatch, keepUnknownBought, parseMulti, STARTER_BUYS, topFrequent } from '../lib/cartInput'
+import { findCatalog } from '../data/catalog'
+import { useRecipes } from '../store/custom'
+import { useWishes } from '../store/wish'
 import { recordBuys, useBuyFreq } from '../store/buyFreq'
 
 const SECTION_TITLE: Record<CartItem['source'], string> = {
@@ -25,6 +28,8 @@ export function CartScreen() {
   const inputRef = useRef<HTMLInputElement>(null)
   const noticeTimer = useRef<number | undefined>(undefined)
   const freq = useBuyFreq()
+  const recipes = useRecipes()
+  const wishes = useWishes()
 
   // 재료 목록에 있는 재료면 그 이름으로 담아야, 장보기 끝낼 때 냉장고 제자리(칸·종류)로 들어간다
   const suggestions = searchCatalog(draft, 6, normalize)
@@ -98,7 +103,14 @@ export function CartScreen() {
   const finish = () => {
     track('shopping_finished', { count: bought })
     recordBuys(state.cart.filter((c) => c.done && c.source !== 'manual').map((c) => c.name))
-    dispatch({ type: 'finishShopping' })
+    // 재료 목록에 없지만 레시피(나만의 레시피·해볼 요리 포함)에 쓰이는 건 냉장고로
+    const used = new Set([...recipes.flatMap((r) => r.ingredients.map((i) => normalize(i.name))), ...wishes.flatMap((w) => (w.ingredients ?? []).map(normalize))])
+    const keep = keepUnknownBought(
+      state.cart.filter((c) => c.done).map((c) => c.name),
+      used,
+      (n) => Boolean(findCatalog(n) || state.fridge.some((f) => f.name === n)),
+    )
+    dispatch({ type: 'finishShopping', keep })
     navigate('/kitchen')
   }
 

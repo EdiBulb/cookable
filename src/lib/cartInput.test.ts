@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { bump, catalogMatch, parseMulti, topFrequent } from './cartInput'
+import { bump, catalogMatch, keepUnknownBought, parseMulti, topFrequent } from './cartInput'
 
 describe('장바구니 직접 추가', () => {
   it('목록 이름으로 맞춘다 (띄어쓰기·별칭)', () => {
@@ -26,5 +26,19 @@ describe('장바구니 직접 추가', () => {
     f = bump(f, ['두부'], 300)
     expect(topFrequent(f, new Set())).toEqual(['계란', '두부', '우유'])
     expect(topFrequent(f, new Set(['계란']), 1)).toEqual(['두부'])
+  })
+})
+
+describe('장보기 끝낼 때 목록에 없는 재료', () => {
+  it('레시피에 쓰이는 이름만 냉장고로, 생활용품은 빠진다', () => {
+    const used = new Set(['트러플오일', '두부'])
+    const keep = keepUnknownBought(['트러플오일', '휴지', '두부'], used, (n) => n === '두부')
+    expect(keep.map((k) => k.name)).toEqual(['트러플오일'])
+    expect(keep[0]).toMatchObject({ category: 'sauce', place: 'pantry' })
+  })
+
+  it('참치액은 이제 재료 목록에 있다', () => {
+    expect(catalogMatch('참치액')).toBe('참치액')
+    expect(catalogMatch('참치액젓')).toBe('참치액')
   })
 })

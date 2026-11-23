@@ -1,3 +1,4 @@
+import type { CatalogItem } from '../types'
 import { searchCatalog } from '../data/catalog'
 import { normalize } from './recommend'
 
@@ -55,3 +56,18 @@ export function topFrequent(freq: BuyFreq, exclude: Set<string>, limit = 8): str
 
 /** 기록이 없을 때 보여 줄 기본 장보기 재료 */
 export const STARTER_BUYS = ['계란', '우유', '대파', '양파', '두부', '라면', '김', '식빵']
+
+/** 재료 목록에 없는 이름의 보관 칸·종류 짐작 (양념류는 끝말로) */
+export function guessPlace(name: string): { category: CatalogItem['category']; place: CatalogItem['place'] } {
+  if (/(액|액젓|소스|간장|장|청|가루|기름|오일|식초|즙|시럽|드레싱|육수|스톡)$/.test(name)) return { category: 'sauce', place: 'pantry' }
+  if (/(면|국수|쌀|떡)$/.test(name)) return { category: 'grain', place: 'pantry' }
+  return { category: 'veg', place: 'main' }
+}
+
+/**
+ * 장보기를 끝낼 때, 재료 목록에 없지만 레시피에 재료로 쓰이는 것은 냉장고에 넣는다.
+ * (예: 나만의 레시피에 직접 적은 "참치액") 생활용품(휴지)은 어떤 레시피에도 없으니 빠진다.
+ */
+export function keepUnknownBought(bought: string[], usedInRecipes: Set<string>, isKnown: (name: string) => boolean): CatalogItem[] {
+  return bought.filter((n) => !isKnown(n) && usedInRecipes.has(normalize(n))).map((name) => ({ name, ...guessPlace(name) }))
+}
